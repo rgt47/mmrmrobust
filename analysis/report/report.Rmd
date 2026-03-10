@@ -1,132 +1,563 @@
 ---
-title: "Robustness of the linearity assumption for MMRM models (x09)"
+title: "Robustness of the Linearity Assumption in Random-Slopes
+  MMRM for Alzheimer's Disease Trials"
 author: "R.G. Thomas"
 date: "`r Sys.Date()`"
 fontsize: 11pt
-geometry: "left=3cm,right=3in,top=2cm,bottom=2cm"
+geometry: "left=3cm,right=5cm,top=2cm,bottom=2cm"
 output:
   pdf_document:
     latex_engine: xelatex
     toc: true
     number_sections: true
     highlight: tango
-    keep_tex: true 
+    keep_tex: true
     includes:
       in_header: "~/shr/preamble.tex"
 header-includes:
-   - \rhead{Lab report}
-   - \fancyfoot[L]{\currfilename} %put current file in footer
+   - \rhead{MMRM Linearity Robustness}
+   - \fancyfoot[L]{\currfilename}
    - \setlength{\headheight}{13.59999pt}
-bibliography: '`r normalizePath("~/shr/library.bib")`'
+bibliography: references.bib
+link-citations: true
 ---
 
-<!-- your comment 
-\input{notes.tex}
-\hspace{4in}
-\fbox{
-\parbox{3in}{\Large 
-Notes: 
-\begin{itemize}
-\item a \\
-\item b  \\
-\end{itemize}
-}
-}
--->
+```{r setup, include=FALSE}
+options(
+  knitr.kable.NA = "",
+  dplyr.summarise.inform = FALSE,
+  knitr.table.format = "latex"
+)
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(MASS)
+library(nlme)
 
-```{r  include=FALSE, echo=F}
-# clear env: objects and packages
-rm(list = ls())
-wh = which(search()=="package:nvimcom")
-if (wh >2) for (x in (wh-1):2) {detach(po = x, force=T)}
-rm(wh)
-options(knitr.kable.NA = '',dplyr.summarise.inform = FALSE, 
-	dplyr.print_max = 1e9,knitr.table.format = "latex")
-library(pacman)
-p_load(skimr, janitor, kableExtra,tidyverse, knitr, lubridate, readxl)
-
-opts_chunk$set(warning = F, message = F, echo = F, fig.width = 3.2,
-       fig.height = 3,  results = "asis", dev = "pdf",
-       opts_chunk$set(cache.path = "cache/"))
-source("~/shr/zz.tools.R")
-options(scipen = 1, digits = 2)
+opts_chunk$set(
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE,
+  fig.width = 5,
+  fig.height = 3.5,
+  results = "asis",
+  dev = "pdf",
+  cache = TRUE,
+  cache.path = "cache/"
+)
+options(scipen = 1, digits = 3)
 ```
-
-<!-- your comment 
-\listoftodos
-\lipsum[2]
-\todo[inline, color=cyan]{The original todo note withouth changed colours.\newline Here's another line.}
-\begin{wrapfigure}{r}[.4\textwidth]{.4\textwidth}%
-\textit{\sffamily\normalsize\textcolor{gray!50}{
-Tornado plot: x-axis participants IDs y-axis study visits plot mean of cumulative
-AEs stratified by pre-covid and post-covid study visits (March 12 is
-the date we are using as a cut-point: through March 12 is pre-COVID,
-after March 12 is post-COVID) }}% 
-\end{wrapfigure}
-\lipsum[2]
-
-Sample reference section reference. @Pocock1975a
-
-\begin{marginfigure}
-\includegraphics[width=3in]{/Users/zenn/shr/images/sudoku-3d-cube.pdf} \caption{test}\label{fig:unnamed-chunk-8}
-\end{marginfigure}
-
-My most common usage of the todonotes package, is to insert an uncustomized
-todonotes somewhere in a latex document. An example of this usage is the command
-\todo{Make a cake \ldots},
-\lipsum[1]
-\todo[color=green]{Make a pie \ldots},
-\lipsum[1] 
-\todo{Make a joke \ldots},
-\listoftodos
--->
-
-```{r eval=T}
-# steps to add a simple table 
-# 1) inside R block: create the table in tabyl(), call it tab1
-# > dat  %>%  tabyl(var1, var2)
-# 2. library(kableExtra)
-# 3. kable(tab1, "latex", booktabs = T,escape=FALSE) %>%
-# 		kable_styling(latex_options = "striped")   
-# 4. zz.figured(tab1)
-# 5. outside R block: \newpage \includegraphics[]{./tables/tab1.pdf}
-# 6. choose between the two versions. 
-# 7. add a caption.  \captionof{figure}{tab1 caption}
-tab1 = iris  %>%  
-mutate(len = Petal.Length > 1.3)  %>%  
-tabyl(len,Species) %>%  
-adorn_totals(where = "row") %>%  
-adorn_totals(where = "col")   
-out = kbl(tab1,  booktabs = T,escape=FALSE, 
-    caption = "tabled visit and week number") %>%
-		kable_paper(latex_options = "striped")    
-# out
-# advanced formatting. if desire to convert table to figure.
-zz.figured(tab1)
-# follow with latex outside R chunk
-# \includegraphics[]{./tables/tab1.pdf}
-# \captionof{figure}{tabled visit and week number}
-# hd(iris) |> kable()
-# skim(iris)    %>% skimr::yank("numeric")
-skim_without_charts(iris)    %>% skimr::partition()    
-
-```
-# Notes 
-
-Start reading ICH guidance
-ich-e-9-statistical-principles-clinical-trials-step-5_en.pdf
-
-look to see if there is a newer statistics guidance that 1998
 
 # Introduction
+
+## The CDR-SB as a primary endpoint in AD trials
+
+The Clinical Dementia Rating Sum of Boxes (CDR-SB) has
+become the primary efficacy endpoint for disease-modifying
+trials in early Alzheimer's disease (AD). The instrument
+integrates cognition and function into a single composite
+score ranging from 0 to 18, and it demonstrates superior
+responsiveness to change in early-stage populations compared
+with traditional cognitive scales such as the ADAS-Cog
+[@cedarbaum2013rationale; @coley2011suitability]. Annual
+CDR-SB progression rates in placebo arms of recent trials
+are approximately 1.3 to 1.7 points per year for
+participants with baseline CDR global scores of 0.5 to 1.0
+[@cedarbaum2013rationale; @hartz2025clinical].
+
+## Treatment effects from recent anti-amyloid trials
+
+The approval of lecanemab and the positive results for
+donanemab have provided the first evidence that
+amyloid-targeting therapies can slow clinical decline on
+CDR-SB. In the CLARITY-AD trial, lecanemab reduced 18-month
+CDR-SB worsening by 0.45 points (27% slowing) relative to
+placebo, with the treatment arm declining 1.21 points
+versus 1.66 in placebo [@vandyck2023lecanemab]. The
+TRAILBLAZER-ALZ 2 trial of donanemab demonstrated a similar
+magnitude of slowing on CDR-SB in participants with
+low/medium tau burden [@sims2023donanemab]. In both trials,
+inspection of the CDR-SB trajectories over time reveals a
+non-constant treatment difference: the separation between
+arms widens gradually, with the rate of separation
+appearing to change across the 18-month follow-up period.
+
+## The linearity question
+
+Both regulatory agencies and the statistical community have
+debated the choice between two estimands for these trials:
+
+- **Final-visit estimand:** The between-group difference in
+  mean change from baseline at the last scheduled visit
+  (e.g., month 18). This corresponds to the categorical-time
+  MMRM, which places no parametric constraint on how the mean
+  response evolves over time
+  [@mallinckrodt2008recommendations].
+
+- **Slope estimand:** The between-group difference in the
+  rate of change per unit time. This corresponds to a
+  random-slopes mixed model that assumes the treatment
+  effect accumulates linearly over the follow-up period.
+
+The U.S. Food and Drug Administration's 2018 draft guidance
+on early AD drug development discusses the use of slope
+analyses as a potentially more sensitive approach for
+detecting disease-modifying effects, particularly when the
+mechanism is expected to produce a constant rate of slowing
+[@fda2018guidance]. The European Medicines Agency's guideline
+similarly acknowledges slope-based endpoints for
+disease-modification claims, while also noting that the
+assumption of constant treatment effect rates must be
+verified [@ema2018guideline]. The ICH E9(R1) addendum on
+estimands provides the formal framework for distinguishing
+these two targets of estimation, emphasizing that the choice
+of estimand should precede the choice of statistical model
+[@ich2019e9r1].
+
+## Why linearity may not hold
+
+Several biological and design factors suggest that the
+treatment effect in AD trials is unlikely to be perfectly
+linear in time:
+
+1. **Delayed pharmacodynamic onset.** Anti-amyloid
+   antibodies require weeks to months to achieve meaningful
+   amyloid clearance. The clinical benefit may lag behind
+   the biological effect, producing a delayed-onset or
+   concave treatment effect trajectory (the effect
+   accelerates over time).
+
+2. **Plateau or diminishing returns.** Conversely, if the
+   treatment primarily benefits patients at earlier disease
+   stages, the marginal benefit per additional month of
+   treatment could decrease as disease progresses,
+   producing a convex (early-onset) trajectory.
+
+3. **Nonlinear placebo progression.** Even if the treatment
+   modifies the underlying rate by a constant fraction,
+   nonlinearity in the natural disease trajectory
+   (documented by @jamalian2023modeling using nonlinear
+   mixed-effect models) would produce a nonlinear absolute
+   treatment difference over time.
+
+Despite the clinical relevance of this question, there is
+limited simulation evidence quantifying how much nonlinearity
+the random-slopes model can tolerate. @chen2018simulation
+compared the slope model with the categorical-time MMRM for
+ADAS-Cog data, finding that the slope model is more powerful
+when linearity approximately holds, but biased otherwise.
+However, that study did not systematically vary the degree
+of nonlinearity, nor did it focus on CDR-SB.
+
+## Present study
+
+This report uses Monte Carlo simulation to evaluate the
+robustness of the random-slopes MMRM to departures from
+linearity in the treatment effect trajectory. We simulate
+18-month AD trials with CDR-SB as the primary endpoint,
+visits at 3-month intervals, and a total treatment effect
+of $-0.45$ points at month 18 (matching CLARITY-AD). We
+parameterize the shape of the treatment effect trajectory
+using a power function $g(t) = (t/t_{\max})^\kappa$, where
+$\kappa = 1$ yields a linear effect, $\kappa < 1$ yields
+an early-onset (convex) pattern, and $\kappa > 1$ yields a
+delayed-onset (concave) pattern. We compare two analysis
+models:
+
+1. A **random-slopes MMRM** that fits treatment-by-time as
+   a linear interaction and extracts the treatment contrast
+   at 18 months.
+2. A **categorical-time MMRM** that fits treatment-by-visit
+   as an unstructured interaction and extracts the treatment
+   contrast at the final visit.
+
+We evaluate bias, empirical standard error, model-based
+standard error, power (proportion of $p < 0.05$), and 95\%
+confidence interval coverage across a range of $\kappa$
+values.
+
 # Methods
 
-# Results
-# Code 
+## Data-generating model
 
-<!-- your comment 
-```{r, attr.source='.numberLines', ref.label=knitr::all_labels(),echo=TRUE,eval=FALSE}
+We generate data for $N = 200$ participants per arm (total
+$N = 400$) observed at months $t \in \{0, 3, 6, 9, 12,
+15, 18\}$. The outcome for participant $i$ at visit $j$ is:
+
+$$
+Y_{ij} = \beta_0 + b_{0i} + (\beta_1 + b_{1i}) t_j^* +
+\delta \cdot g(t_j, \kappa) \cdot \text{trt}_i +
+\varepsilon_{ij}
+$$
+
+where $t_j^* = t_j / 12$ is time in years, $\text{trt}_i$
+is a binary treatment indicator, and:
+
+$$
+g(t_j, \kappa) = \left(\frac{t_j}{t_{\max}}\right)^\kappa
+$$
+
+The random effects $(b_{0i}, b_{1i})$ follow a bivariate
+normal distribution with standard deviations $\sigma_{b_0}
+= 1.0$ and $\sigma_{b_1} = 0.6$ (in CDR-SB points per
+year) and correlation $\rho = 0.3$. The within-subject
+errors $\varepsilon_{ij}$ have an AR(1) structure with
+marginal variance $\sigma^2 = 1.44$ and autocorrelation
+$\phi = 0.4$.
+
+## Parameter values
+
+The fixed-effect parameters are calibrated to approximate
+the placebo arm of CLARITY-AD:
+
+| Parameter | Value | Interpretation |
+|-----------|-------|----------------|
+| $\beta_0$ | 3.2 | Mean baseline CDR-SB |
+| $\beta_1$ | 1.5 points/year | Placebo annual decline |
+| $\delta$ | $-0.45$ | Treatment effect at $t_{\max}$ |
+| $\kappa$ | Varies | Shape of treatment effect |
+
+The $\kappa$ parameter takes values in $\{0.3, 0.5, 0.7,
+1.0, 1.5, 2.0, 3.0\}$, spanning strongly convex
+(early-onset) to strongly concave (delayed-onset) treatment
+effect trajectories.
+
+## Analysis models
+
+**Random-slopes model.** We fit a linear mixed-effects model
+with fixed effects for treatment, time (continuous, in
+years), and their interaction, plus random intercepts and
+random slopes for time. The treatment effect at 18 months is
+estimated as $\hat{\beta}_{\text{trt} \times \text{time}}
+\times 1.5$.
+
+**Categorical-time model.** We fit a mixed-effects model
+with fixed effects for treatment, visit (categorical), and
+their interaction, plus a random intercept and compound
+symmetry residual correlation. The treatment effect at 18
+months is the estimated coefficient for the treatment-by-
+month-18 interaction.
+
+## Simulation procedure
+
+For each value of $\kappa$, we generate 1000 replicate
+trials, fit both models to each, and record the point
+estimate, standard error, and $p$-value for the 18-month
+treatment contrast. Summary metrics are computed across
+replicates.
+
+```{r run-sim, cache=TRUE}
+source("../scripts/sim_mmrm_linearity.R")
+
+n_sim_reps <- 1000
+sim_raw <- run_simulation(
+  n_rep     = n_sim_reps,
+  kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
+  n_per_arm = 200,
+  delta     = -0.45,
+  seed      = 20260310
+)
+
+sim_summary <- summarize_results(sim_raw, true_delta = -0.45)
 ```
--->
+
+# Results
+
+## Treatment effect shape
+
+Figure 1 illustrates the treatment effect trajectories
+$g(t, \kappa)$ for the seven values of $\kappa$ used in the
+simulation. When $\kappa = 1$, the treatment effect accrues
+linearly. When $\kappa < 1$ (e.g., $\kappa = 0.3$), most
+of the effect is realized early, with diminishing marginal
+benefit at later visits. When $\kappa > 1$ (e.g., $\kappa
+= 3.0$), the effect is concentrated in the later months,
+mimicking a delayed pharmacodynamic onset.
+
+```{r fig-shapes, fig.cap="Treatment effect trajectories under different shape parameters. All curves reach the same total effect at month 18.", fig.width=5, fig.height=3.5}
+t_months <- seq(0, 18, by = 0.5)
+kappa_vals <- c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0)
+shape_dat <- expand.grid(
+  t = t_months,
+  kappa = kappa_vals
+) |>
+  mutate(
+    g = (t / 18)^kappa,
+    effect = -0.45 * g,
+    kappa_label = factor(
+      paste0("kappa = ", kappa),
+      levels = paste0("kappa = ", kappa_vals)
+    )
+  )
+
+ltype_map <- c(
+  "kappa = 0.3" = "dotted",
+  "kappa = 0.5" = "dashed",
+  "kappa = 0.7" = "dotdash",
+  "kappa = 1"   = "solid",
+  "kappa = 1.5" = "longdash",
+  "kappa = 2"   = "twodash",
+  "kappa = 3"   = "dotted"
+)
+
+ggplot(shape_dat, aes(
+  x = t, y = effect,
+  linetype = kappa_label
+)) +
+  geom_line(linewidth = 0.6) +
+  scale_linetype_manual(values = ltype_map) +
+  labs(
+    x = "Month",
+    y = "Treatment effect (CDR-SB points)",
+    linetype = "Shape"
+  ) +
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "right")
+```
+
+## Summary statistics
+
+```{r tab-summary}
+tab_display <- sim_summary |>
+  dplyr::select(
+    kappa,
+    slope_bias, slope_emp_se, slope_mean_se,
+    slope_power, slope_coverage,
+    cat_bias, cat_emp_se, cat_mean_se,
+    cat_power, cat_coverage
+  ) |>
+  mutate(across(
+    c(slope_bias, cat_bias),
+    ~ round(.x, 3)
+  )) |>
+  mutate(across(
+    c(slope_emp_se, slope_mean_se,
+      cat_emp_se, cat_mean_se),
+    ~ round(.x, 3)
+  )) |>
+  mutate(across(
+    c(slope_power, cat_power,
+      slope_coverage, cat_coverage),
+    ~ round(.x, 3)
+  ))
+
+kbl(
+  tab_display,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = paste(
+    "Simulation results: bias, empirical SE, mean",
+    "model-based SE, power, and 95\\% CI coverage",
+    "for the random-slopes and categorical-time MMRM",
+    "across shape parameter values.",
+    "True treatment effect = $-0.45$."
+  ),
+  col.names = c(
+    "$\\kappa$",
+    "Bias", "Emp SE", "Mod SE", "Power", "Cov",
+    "Bias", "Emp SE", "Mod SE", "Power", "Cov"
+  )
+) |>
+  add_header_above(c(
+    " " = 1,
+    "Random-Slopes MMRM" = 5,
+    "Categorical-Time MMRM" = 5
+  )) |>
+  kable_styling(
+    latex_options = c("striped", "scale_down"),
+    font_size = 9
+  )
+```
+
+## Bias
+
+```{r fig-bias, fig.cap="Bias in the estimated 18-month treatment effect as a function of the shape parameter. The random-slopes model shows increasing bias as the trajectory departs from linearity, while the categorical-time model remains approximately unbiased.", fig.width=5, fig.height=3}
+bias_dat <- sim_summary |>
+  dplyr::select(kappa, slope_bias, cat_bias) |>
+  pivot_longer(
+    cols = c(slope_bias, cat_bias),
+    names_to = "model",
+    values_to = "bias"
+  ) |>
+  mutate(model = ifelse(
+    model == "slope_bias",
+    "Random slopes", "Categorical time"
+  ))
+
+ggplot(bias_dat, aes(
+  x = kappa, y = bias,
+  linetype = model, shape = model
+)) +
+  geom_hline(yintercept = 0, linewidth = 0.3,
+             color = "grey50") +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 2) +
+  scale_linetype_manual(values = c(
+    "Random slopes" = "solid",
+    "Categorical time" = "dashed"
+  )) +
+  scale_shape_manual(values = c(
+    "Random slopes" = 16,
+    "Categorical time" = 17
+  )) +
+  labs(
+    x = expression(kappa),
+    y = "Bias (CDR-SB points)",
+    linetype = "Model",
+    shape = "Model"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
+## Power comparison
+
+```{r fig-power, fig.cap="Power to detect the 18-month treatment effect ($\\alpha = 0.05$, two-sided) as a function of the shape parameter.", fig.width=5, fig.height=3}
+power_dat <- sim_summary |>
+  dplyr::select(kappa, slope_power, cat_power) |>
+  pivot_longer(
+    cols = c(slope_power, cat_power),
+    names_to = "model",
+    values_to = "power"
+  ) |>
+  mutate(model = ifelse(
+    model == "slope_power",
+    "Random slopes", "Categorical time"
+  ))
+
+ggplot(power_dat, aes(
+  x = kappa, y = power,
+  linetype = model, shape = model
+)) +
+  geom_line(linewidth = 0.6) +
+  geom_point(size = 2) +
+  scale_linetype_manual(values = c(
+    "Random slopes" = "solid",
+    "Categorical time" = "dashed"
+  )) +
+  scale_shape_manual(values = c(
+    "Random slopes" = 16,
+    "Categorical time" = 17
+  )) +
+  labs(
+    x = expression(kappa),
+    y = "Power",
+    linetype = "Model",
+    shape = "Model"
+  ) +
+  theme_minimal(base_size = 10)
+```
+
+# Discussion
+
+The simulation results quantify the bias-variance tradeoff
+between the random-slopes and categorical-time MMRM when
+the treatment effect in an AD trial departs from linearity.
+
+When the treatment effect is truly linear ($\kappa = 1$),
+the random-slopes model is expected to show negligible bias
+and higher power than the categorical-time model, consistent
+with the general principle that correctly specified parametric
+models are more efficient than nonparametric alternatives
+[@chen2018simulation; @mallinckrodt2008recommendations].
+
+As $\kappa$ departs from 1, the random-slopes model
+incurs systematic bias in estimating the 18-month treatment
+contrast. This occurs because the model constrains the
+treatment effect to accumulate linearly, so when the true
+effect is front-loaded ($\kappa < 1$) or back-loaded
+($\kappa > 1$), the linear fit misallocates the effect
+across time points, distorting the extrapolation to 18
+months. The categorical-time model, by contrast, places no
+constraint on the shape of the mean trajectory and thus
+remains approximately unbiased regardless of $\kappa$.
+
+The practical implication for AD trial design is that the
+choice between slope and final-visit estimands should be
+informed by the expected treatment effect trajectory. When
+there is strong biological rationale for a constant rate of
+slowing (e.g., a treatment that directly modulates the
+underlying disease rate), the slope estimand and
+random-slopes model offer a power advantage. When the
+mechanism suggests delayed onset (as with amyloid-clearing
+antibodies that require months to achieve plaque reduction)
+or early plateau, the final-visit estimand with
+categorical-time MMRM is the safer choice.
+
+This conclusion aligns with the regulatory perspective. The
+FDA guidance notes that slope analyses may be considered
+when 'the course of the disease is predictable and
+approximately linear' [@fda2018guidance]. The EMA guideline
+similarly conditions slope-based claims on verifiable
+linearity [@ema2018guideline]. The ICH E9(R1) estimand
+framework reinforces that the estimand (slope vs.
+final-visit) should be chosen on scientific grounds before
+the statistical model is specified [@ich2019e9r1].
+
+The results from recent Phase 3 trials are informative.
+Visual inspection of CDR-SB trajectories in CLARITY-AD
+[@vandyck2023lecanemab] and TRAILBLAZER-ALZ 2
+[@sims2023donanemab] suggests that the treatment effect
+separation is not perfectly linear. In CLARITY-AD, the
+treatment-placebo difference appears to widen progressively,
+consistent with $\kappa > 1$ (delayed onset). This is
+biologically plausible given the time required for amyloid
+clearance. The proportional MMRM approach of @wang2022proportional
+offers an intermediate option that assumes the treatment effect
+is proportional to the placebo trajectory without requiring
+linearity per se.
+
+## Limitations
+
+The simulation uses a relatively simple data-generating model
+with Gaussian outcomes and no missing data. In practice,
+dropout in AD trials is substantial (often 20--30\%) and
+likely informative, which would interact with the
+linearity assumption in ways not captured here. The
+AR(1) error structure may not fully represent the complex
+correlation patterns in real CDR-SB data. Future work
+should incorporate realistic dropout mechanisms and evaluate
+sensitivity analyses under the ICH E9(R1) framework.
+
+# Future research
+
+1. **Incorporate dropout.** Extend the simulation to include
+   informative dropout mechanisms, evaluating how the
+   interaction between nonlinearity and missingness affects
+   bias and coverage under MAR and MNAR assumptions.
+
+2. **Additional covariance structures.** Compare unstructured,
+   Toeplitz, and heterogeneous AR(1) covariance models
+   within the categorical-time MMRM to determine whether
+   covariance misspecification compounds the effects of mean
+   structure misspecification.
+
+3. **Proportional and constrained models.** Evaluate the
+   proportional MMRM [@wang2022proportional] and constrained
+   longitudinal data analysis (cLDA) as intermediate models
+   that borrow strength across time without full linearity.
+
+4. **Nonlinear mixed-effects models.** Investigate whether
+   fitting a power-function or sigmoidal treatment effect
+   model can recover the true $\kappa$ and provide unbiased
+   estimates even under strong nonlinearity, following the
+   approach of @novic2024nonlinear.
+
+5. **Bayesian MMRM.** Evaluate whether Bayesian approaches
+   with weakly informative priors on the treatment effect
+   shape can adaptively borrow information across time points
+   without the rigidity of the linear assumption.
+
+6. **Software development.** Develop an R package that
+   implements the simulation framework and provides
+   diagnostic tools for assessing linearity of the treatment
+   effect in observed trial data, building on the `mmrm`
+   package infrastructure [@sabanesbove2024mmrm].
+
+7. **Applied re-analysis.** Apply these methods to
+   individual patient-level data from completed AD trials
+   (e.g., ADNI placebo arms) to estimate the empirical
+   $\kappa$ for different endpoints and disease stages
+   [@jamalian2023modeling].
 
 # References

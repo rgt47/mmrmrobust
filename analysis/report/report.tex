@@ -1,0 +1,671 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+  11pt,
+]{article}
+\usepackage{xcolor}
+\usepackage[left=3cm,right=3in,top=2cm,bottom=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{longtable,booktabs,array}
+\newcounter{none} % for unnumbered tables
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+% definitions for citeproc citations
+\NewDocumentCommand\citeproctext{}{}
+\NewDocumentCommand\citeproc{mm}{%
+  \begingroup\def\citeproctext{#2}\cite{#1}\endgroup}
+\makeatletter
+ % allow citations to break across lines
+ \let\@cite@ofmt\@firstofone
+ % avoid brackets around text for \cite:
+ \def\@biblabel#1{}
+ \def\@cite#1#2{{#1\if@tempswa , #2\fi}}
+\makeatother
+\newlength{\cslhangindent}
+\setlength{\cslhangindent}{1.5em}
+\newlength{\csllabelwidth}
+\setlength{\csllabelwidth}{3em}
+\newenvironment{CSLReferences}[2] % #1 hanging-indent, #2 entry-spacing
+ {\begin{list}{}{%
+  \setlength{\itemindent}{0pt}
+  \setlength{\leftmargin}{0pt}
+  \setlength{\parsep}{0pt}
+  % turn on hanging indent if param 1 is 1
+  \ifodd #1
+   \setlength{\leftmargin}{\cslhangindent}
+   \setlength{\itemindent}{-1\cslhangindent}
+  \fi
+  % set entry spacing
+  \setlength{\itemsep}{#2\baselineskip}}}
+ {\end{list}}
+\usepackage{calc}
+\newcommand{\CSLBlock}[1]{\hfill\break\parbox[t]{\linewidth}{\strut\ignorespaces#1\strut}}
+\newcommand{\CSLLeftMargin}[1]{\parbox[t]{\csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLRightInline}[1]{\parbox[t]{\linewidth - \csllabelwidth}{\strut#1\strut}}
+\newcommand{\CSLIndent}[1]{\hspace{\cslhangindent}#1}
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{placeins, graphicx, geometry, longtable, fancyhdr, currfile, wrapfig,
+multicol, caption, capt-of, lipsum, booktabs, pgfpages, titling, fancyhdr, currfile}
+\usepackage[export]{adjustbox}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage{makecell}
+\usepackage{caption}
+\usepackage{fancyvrb}
+\definecolor{codebg}{RGB}{248,248,248}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\},fontsize=\small}
+\pagestyle{fancy}
+\pretitle{
+\begin{flushright}
+% \write18{wget https://github.com/rgt47/kickstart/blob/master/sudoku_apple.pdf}
+\includegraphics[width=3cm,valign=c]{sudoku_apple.pdf}\\
+\end{flushright}
+\begin{flushleft} \LARGE }
+\posttitle{\par\end{flushleft}
+\vskip 0.5em}
+\predate{\begin{flushleft}\large}
+	\postdate{\par\end{flushleft}}
+	\preauthor{\begin{flushleft}\large}
+	\postauthor{\par\end{flushleft}}
+\fancyfoot[L]{\currfilename} %put date in header
+\fancyfoot[R]{\includegraphics[width=.8cm]{sudoku_apple.pdf}}
+\fancyhead[L]{\today} %put current file in footer
+\setlength{\headheight}{13.59999pt}
+
+\newcommand\zztab[3]{
+\noindent
+\begin{center} 
+\includegraphics[keepaspectratio,width=#2]{#1}
+\end{center} 
+\captionof{table}{#3}
+}
+
+\newcommand\zzfig[3]{
+\noindent
+\begin{center} 
+\includegraphics[keepaspectratio, width=#2]{#1}
+\end{center} 
+\captionof{figure}{#3}
+}
+\rhead{MMRM Linearity Robustness}
+\fancyfoot[L]{\currfilename}
+\setlength{\headheight}{13.59999pt}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Robustness of the Linearity Assumption in Random-Slopes MMRM for Alzheimer's Disease Trials},
+  pdfauthor={R.G. Thomas},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Robustness of the Linearity Assumption in Random-Slopes MMRM for
+Alzheimer's Disease Trials}
+\author{R.G. Thomas}
+\date{2026-03-10}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\section{Introduction}\label{introduction}
+
+\subsection{The CDR-SB as a primary endpoint in AD
+trials}\label{the-cdr-sb-as-a-primary-endpoint-in-ad-trials}
+
+The Clinical Dementia Rating Sum of Boxes (CDR-SB) has become the
+primary efficacy endpoint for disease-modifying trials in early
+Alzheimer's disease (AD). The instrument integrates cognition and
+function into a single composite score ranging from 0 to 18, and it
+demonstrates superior responsiveness to change in early-stage
+populations compared with traditional cognitive scales such as the
+ADAS-Cog (Cedarbaum et al. 2013; Coley et al. 2011). Annual CDR-SB
+progression rates in placebo arms of recent trials are approximately 1.3
+to 1.7 points per year for participants with baseline CDR global scores
+of 0.5 to 1.0 (Cedarbaum et al. 2013; Hartz et al. 2025).
+
+\subsection{Treatment effects from recent anti-amyloid
+trials}\label{treatment-effects-from-recent-anti-amyloid-trials}
+
+The approval of lecanemab and the positive results for donanemab have
+provided the first evidence that amyloid-targeting therapies can slow
+clinical decline on CDR-SB. In the CLARITY-AD trial, lecanemab reduced
+18-month CDR-SB worsening by 0.45 points (27\% slowing) relative to
+placebo, with the treatment arm declining 1.21 points versus 1.66 in
+placebo ({Dyck et al.} 2023). The TRAILBLAZER-ALZ 2 trial of donanemab
+demonstrated a similar magnitude of slowing on CDR-SB in participants
+with low/medium tau burden ({Sims et al.} 2023). In both trials,
+inspection of the CDR-SB trajectories over time reveals a non-constant
+treatment difference: the separation between arms widens gradually, with
+the rate of separation appearing to change across the 18-month follow-up
+period.
+
+\subsection{The linearity question}\label{the-linearity-question}
+
+Both regulatory agencies and the statistical community have debated the
+choice between two estimands for these trials:
+
+\begin{itemize}
+\item
+  \textbf{Final-visit estimand:} The between-group difference in mean
+  change from baseline at the last scheduled visit (e.g., month 18).
+  This corresponds to the categorical-time MMRM, which places no
+  parametric constraint on how the mean response evolves over time
+  (Mallinckrodt et al. 2008).
+\item
+  \textbf{Slope estimand:} The between-group difference in the rate of
+  change per unit time. This corresponds to a random-slopes mixed model
+  that assumes the treatment effect accumulates linearly over the
+  follow-up period.
+\end{itemize}
+
+The U.S. Food and Drug Administration's 2018 draft guidance on early AD
+drug development discusses the use of slope analyses as a potentially
+more sensitive approach for detecting disease-modifying effects,
+particularly when the mechanism is expected to produce a constant rate
+of slowing (U.S. Food and Drug Administration 2018). The European
+Medicines Agency's guideline similarly acknowledges slope-based
+endpoints for disease-modification claims, while also noting that the
+assumption of constant treatment effect rates must be verified (European
+Medicines Agency 2018). The ICH E9(R1) addendum on estimands provides
+the formal framework for distinguishing these two targets of estimation,
+emphasizing that the choice of estimand should precede the choice of
+statistical model (International Council for Harmonisation 2020).
+
+\subsection{Why linearity may not
+hold}\label{why-linearity-may-not-hold}
+
+Several biological and design factors suggest that the treatment effect
+in AD trials is unlikely to be perfectly linear in time:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Delayed pharmacodynamic onset.} Anti-amyloid antibodies
+  require weeks to months to achieve meaningful amyloid clearance. The
+  clinical benefit may lag behind the biological effect, producing a
+  delayed-onset or concave treatment effect trajectory (the effect
+  accelerates over time).
+\item
+  \textbf{Plateau or diminishing returns.} Conversely, if the treatment
+  primarily benefits patients at earlier disease stages, the marginal
+  benefit per additional month of treatment could decrease as disease
+  progresses, producing a convex (early-onset) trajectory.
+\item
+  \textbf{Nonlinear placebo progression.} Even if the treatment modifies
+  the underlying rate by a constant fraction, nonlinearity in the
+  natural disease trajectory (documented by {Jamalian et al.} (2023)
+  using nonlinear mixed-effect models) would produce a nonlinear
+  absolute treatment difference over time.
+\end{enumerate}
+
+Despite the clinical relevance of this question, there is limited
+simulation evidence quantifying how much nonlinearity the random-slopes
+model can tolerate. {Chen et al.} (2018) compared the slope model with
+the categorical-time MMRM for ADAS-Cog data, finding that the slope
+model is more powerful when linearity approximately holds, but biased
+otherwise. However, that study did not systematically vary the degree of
+nonlinearity, nor did it focus on CDR-SB.
+
+\subsection{Present study}\label{present-study}
+
+This report uses Monte Carlo simulation to evaluate the robustness of
+the random-slopes MMRM to departures from linearity in the treatment
+effect trajectory. We simulate 18-month AD trials with CDR-SB as the
+primary endpoint, visits at 3-month intervals, and a total treatment
+effect of \(-0.45\) points at month 18 (matching CLARITY-AD). We
+parameterize the shape of the treatment effect trajectory using a power
+function \(g(t) = (t/t_{\max})^\kappa\), where \(\kappa = 1\) yields a
+linear effect, \(\kappa < 1\) yields an early-onset (convex) pattern,
+and \(\kappa > 1\) yields a delayed-onset (concave) pattern. We compare
+two analysis models:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  A \textbf{random-slopes MMRM} that fits treatment-by-time as a linear
+  interaction and extracts the treatment contrast at 18 months.
+\item
+  A \textbf{categorical-time MMRM} that fits treatment-by-visit as an
+  unstructured interaction and extracts the treatment contrast at the
+  final visit.
+\end{enumerate}
+
+We evaluate bias, empirical standard error, model-based standard error,
+power (proportion of \(p < 0.05\)), and 95\% confidence interval
+coverage across a range of \(\kappa\) values.
+
+\section{Methods}\label{methods}
+
+\subsection{Data-generating model}\label{data-generating-model}
+
+We generate data for \(N = 200\) participants per arm (total
+\(N = 400\)) observed at months \(t \in \{0, 3, 6, 9, 12,
+15, 18\}\). The outcome for participant \(i\) at visit \(j\) is:
+
+\[
+Y_{ij} = \beta_0 + b_{0i} + (\beta_1 + b_{1i}) t_j^* +
+\delta \cdot g(t_j, \kappa) \cdot \text{trt}_i +
+\varepsilon_{ij}
+\]
+
+where \(t_j^* = t_j / 12\) is time in years, \(\text{trt}_i\) is a
+binary treatment indicator, and:
+
+\[
+g(t_j, \kappa) = \left(\frac{t_j}{t_{\max}}\right)^\kappa
+\]
+
+The random effects \((b_{0i}, b_{1i})\) follow a bivariate normal
+distribution with standard deviations \(\sigma_{b_0}
+= 1.0\) and \(\sigma_{b_1} = 0.6\) (in CDR-SB points per year) and
+correlation \(\rho = 0.3\). The within-subject errors
+\(\varepsilon_{ij}\) have an AR(1) structure with marginal variance
+\(\sigma^2 = 1.44\) and autocorrelation \(\phi = 0.4\).
+
+\subsection{Parameter values}\label{parameter-values}
+
+The fixed-effect parameters are calibrated to approximate the placebo
+arm of CLARITY-AD:
+
+{\def\LTcaptype{none} % do not increment counter
+\begin{longtable}[]{@{}lll@{}}
+\toprule\noalign{}
+Parameter & Value & Interpretation \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(\beta_0\) & 3.2 & Mean baseline CDR-SB \\
+\(\beta_1\) & 1.5 points/year & Placebo annual decline \\
+\(\delta\) & \(-0.45\) & Treatment effect at \(t_{\max}\) \\
+\(\kappa\) & Varies & Shape of treatment effect \\
+\end{longtable}
+}
+
+The \(\kappa\) parameter takes values in \(\{0.3, 0.5, 0.7,
+1.0, 1.5, 2.0, 3.0\}\), spanning strongly convex (early-onset) to
+strongly concave (delayed-onset) treatment effect trajectories.
+
+\subsection{Analysis models}\label{analysis-models}
+
+\textbf{Random-slopes model.} We fit a linear mixed-effects model with
+fixed effects for treatment, time (continuous, in years), and their
+interaction, plus random intercepts and random slopes for time. The
+treatment effect at 18 months is estimated as
+\(\hat{\beta}_{\text{trt} \times \text{time}}
+\times 1.5\).
+
+\textbf{Categorical-time model.} We fit a mixed-effects model with fixed
+effects for treatment, visit (categorical), and their interaction, plus
+a random intercept and compound symmetry residual correlation. The
+treatment effect at 18 months is the estimated coefficient for the
+treatment-by- month-18 interaction.
+
+\subsection{Simulation procedure}\label{simulation-procedure}
+
+For each value of \(\kappa\), we generate 1000 replicate trials, fit
+both models to each, and record the point estimate, standard error, and
+\(p\)-value for the 18-month treatment contrast. Summary metrics are
+computed across replicates.
+
+\section{Results}\label{results}
+
+\subsection{Treatment effect shape}\label{treatment-effect-shape}
+
+Figure 1 illustrates the treatment effect trajectories \(g(t, \kappa)\)
+for the seven values of \(\kappa\) used in the simulation. When
+\(\kappa = 1\), the treatment effect accrues linearly. When
+\(\kappa < 1\) (e.g., \(\kappa = 0.3\)), most of the effect is realized
+early, with diminishing marginal benefit at later visits. When
+\(\kappa > 1\) (e.g., \(\kappa
+= 3.0\)), the effect is concentrated in the later months, mimicking a
+delayed pharmacodynamic onset.
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Treatment effect trajectories under different shape parameters. All curves reach the same total effect at month 18.}]{report_files/figure-latex/fig-shapes-1.pdf}}
+\caption{Treatment effect trajectories under different shape parameters.
+All curves reach the same total effect at month 18.}
+\end{figure}
+
+\subsection{Summary statistics}\label{summary-statistics}
+
+\begin{table}
+\centering
+\caption{\label{tab:tab-summary}Simulation results: bias, empirical SE, mean model-based SE, power, and 95\% CI coverage for the random-slopes and categorical-time MMRM across shape parameter values. True treatment effect = $-0.45$.}
+\centering
+\resizebox{\ifdim\width>\linewidth\linewidth\else\width\fi}{!}{
+\fontsize{9}{11}\selectfont
+\begin{tabular}[t]{rrrrrrrrrrr}
+\toprule
+\multicolumn{1}{c}{ } & \multicolumn{5}{c}{Random-Slopes MMRM} & \multicolumn{5}{c}{Categorical-Time MMRM} \\
+\cmidrule(l{3pt}r{3pt}){2-6} \cmidrule(l{3pt}r{3pt}){7-11}
+$\kappa$ & Bias & Emp SE & Mod SE & Power & Cov & Bias & Emp SE & Mod SE & Power & Cov\\
+\midrule
+\cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.076} & \cellcolor{gray!10}{0.194} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.5} & \cellcolor{gray!10}{1.0} & \cellcolor{gray!10}{0.031} & \cellcolor{gray!10}{0.169} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.9}\\
+0.5 & 0.043 & 0.244 & 0.188 & 0.5 & 1.0 & 0.019 & 0.253 & 0.161 & 0.6 & 0.8\\
+\cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.035} & \cellcolor{gray!10}{0.182} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.4} & \cellcolor{gray!10}{1.0} & \cellcolor{gray!10}{0.050} & \cellcolor{gray!10}{0.191} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.9}\\
+1.0 & -0.041 & 0.193 & 0.186 & 0.8 & 1.0 & -0.030 & 0.233 & 0.160 & 0.7 & 0.8\\
+\cellcolor{gray!10}{1.5} & \cellcolor{gray!10}{-0.019} & \cellcolor{gray!10}{0.174} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.8} & \cellcolor{gray!10}{0.9} & \cellcolor{gray!10}{-0.013} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.9} & \cellcolor{gray!10}{0.9}\\
+\addlinespace
+2.0 & 0.035 & 0.153 & 0.189 & 0.8 & 1.0 & 0.055 & 0.138 & 0.161 & 0.7 & 1.0\\
+\cellcolor{gray!10}{3.0} & \cellcolor{gray!10}{0.164} & \cellcolor{gray!10}{0.253} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.8} & \cellcolor{gray!10}{0.135} & \cellcolor{gray!10}{0.254} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.5} & \cellcolor{gray!10}{0.6}\\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\subsection{Bias}\label{bias}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Bias in the estimated 18-month treatment effect as a function of the shape parameter. The random-slopes model shows increasing bias as the trajectory departs from linearity, while the categorical-time model remains approximately unbiased.}]{report_files/figure-latex/fig-bias-1.pdf}}
+\caption{Bias in the estimated 18-month treatment effect as a function
+of the shape parameter. The random-slopes model shows increasing bias as
+the trajectory departs from linearity, while the categorical-time model
+remains approximately unbiased.}
+\end{figure}
+
+\subsection{Power comparison}\label{power-comparison}
+
+\begin{figure}
+\centering
+\pandocbounded{\includegraphics[keepaspectratio,alt={Power to detect the 18-month treatment effect (\textbackslash alpha = 0.05, two-sided) as a function of the shape parameter.}]{report_files/figure-latex/fig-power-1.pdf}}
+\caption{Power to detect the 18-month treatment effect
+(\(\alpha = 0.05\), two-sided) as a function of the shape parameter.}
+\end{figure}
+
+\section{Discussion}\label{discussion}
+
+The simulation results quantify the bias-variance tradeoff between the
+random-slopes and categorical-time MMRM when the treatment effect in an
+AD trial departs from linearity.
+
+When the treatment effect is truly linear (\(\kappa = 1\)), the
+random-slopes model is expected to show negligible bias and higher power
+than the categorical-time model, consistent with the general principle
+that correctly specified parametric models are more efficient than
+nonparametric alternatives ({Chen et al.} 2018; Mallinckrodt et al.
+2008).
+
+As \(\kappa\) departs from 1, the random-slopes model incurs systematic
+bias in estimating the 18-month treatment contrast. This occurs because
+the model constrains the treatment effect to accumulate linearly, so
+when the true effect is front-loaded (\(\kappa < 1\)) or back-loaded
+(\(\kappa > 1\)), the linear fit misallocates the effect across time
+points, distorting the extrapolation to 18 months. The categorical-time
+model, by contrast, places no constraint on the shape of the mean
+trajectory and thus remains approximately unbiased regardless of
+\(\kappa\).
+
+The practical implication for AD trial design is that the choice between
+slope and final-visit estimands should be informed by the expected
+treatment effect trajectory. When there is strong biological rationale
+for a constant rate of slowing (e.g., a treatment that directly
+modulates the underlying disease rate), the slope estimand and
+random-slopes model offer a power advantage. When the mechanism suggests
+delayed onset (as with amyloid-clearing antibodies that require months
+to achieve plaque reduction) or early plateau, the final-visit estimand
+with categorical-time MMRM is the safer choice.
+
+This conclusion aligns with the regulatory perspective. The FDA guidance
+notes that slope analyses may be considered when `the course of the
+disease is predictable and approximately linear' (U.S. Food and Drug
+Administration 2018). The EMA guideline similarly conditions slope-based
+claims on verifiable linearity (European Medicines Agency 2018). The ICH
+E9(R1) estimand framework reinforces that the estimand (slope vs.
+final-visit) should be chosen on scientific grounds before the
+statistical model is specified (International Council for Harmonisation
+2020).
+
+The results from recent Phase 3 trials are informative. Visual
+inspection of CDR-SB trajectories in CLARITY-AD ({Dyck et al.} 2023) and
+TRAILBLAZER-ALZ 2 ({Sims et al.} 2023) suggests that the treatment
+effect separation is not perfectly linear. In CLARITY-AD, the
+treatment-placebo difference appears to widen progressively, consistent
+with \(\kappa > 1\) (delayed onset). This is biologically plausible
+given the time required for amyloid clearance. The proportional MMRM
+approach of Wang et al. (2022) offers an intermediate option that
+assumes the treatment effect is proportional to the placebo trajectory
+without requiring linearity per se.
+
+\subsection{Limitations}\label{limitations}
+
+The simulation uses a relatively simple data-generating model with
+Gaussian outcomes and no missing data. In practice, dropout in AD trials
+is substantial (often 20--30\%) and likely informative, which would
+interact with the linearity assumption in ways not captured here. The
+AR(1) error structure may not fully represent the complex correlation
+patterns in real CDR-SB data. Future work should incorporate realistic
+dropout mechanisms and evaluate sensitivity analyses under the ICH
+E9(R1) framework.
+
+\section{Future research}\label{future-research}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Incorporate dropout.} Extend the simulation to include
+  informative dropout mechanisms, evaluating how the interaction between
+  nonlinearity and missingness affects bias and coverage under MAR and
+  MNAR assumptions.
+\item
+  \textbf{Additional covariance structures.} Compare unstructured,
+  Toeplitz, and heterogeneous AR(1) covariance models within the
+  categorical-time MMRM to determine whether covariance misspecification
+  compounds the effects of mean structure misspecification.
+\item
+  \textbf{Proportional and constrained models.} Evaluate the
+  proportional MMRM (Wang et al. 2022) and constrained longitudinal data
+  analysis (cLDA) as intermediate models that borrow strength across
+  time without full linearity.
+\item
+  \textbf{Nonlinear mixed-effects models.} Investigate whether fitting a
+  power-function or sigmoidal treatment effect model can recover the
+  true \(\kappa\) and provide unbiased estimates even under strong
+  nonlinearity, following the approach of Novic et al. (2024).
+\item
+  \textbf{Bayesian MMRM.} Evaluate whether Bayesian approaches with
+  weakly informative priors on the treatment effect shape can adaptively
+  borrow information across time points without the rigidity of the
+  linear assumption.
+\item
+  \textbf{Software development.} Develop an R package that implements
+  the simulation framework and provides diagnostic tools for assessing
+  linearity of the treatment effect in observed trial data, building on
+  the \texttt{mmrm} package infrastructure (Sabanés Bové et al. 2024).
+\item
+  \textbf{Applied re-analysis.} Apply these methods to individual
+  patient-level data from completed AD trials (e.g., ADNI placebo arms)
+  to estimate the empirical \(\kappa\) for different endpoints and
+  disease stages ({Jamalian et al.} 2023).
+\end{enumerate}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
+
+\protect\phantomsection\label{refs}
+\begin{CSLReferences}{1}{1}
+\bibitem[\citeproctext]{ref-cedarbaum2013rationale}
+Cedarbaum, Jesse M, Martin Jaros, Christopher Hernandez, et al. 2013.
+{``Rationale for Use of the Clinical Dementia Rating Sum of Boxes as a
+Primary Outcome in {Alzheimer's} Disease Clinical Trials.''}
+\emph{Alzheimer's \& Dementia} 9 (Suppl): S45--55.
+\url{https://doi.org/10.1016/j.jalz.2011.09.229}.
+
+\bibitem[\citeproctext]{ref-chen2018simulation}
+{Chen, Yun-Fei, Xiao Ni, Adam S Fleisher, et al.} 2018. {``A Simulation
+Study Comparing Slope Model with Mixed-Model Repeated Measure to Assess
+Cognitive Data in Clinical Trials of {Alzheimer's} Disease.''}
+\emph{Alzheimer's \& Dementia: Translational Research \& Clinical
+Interventions} 4: 143--53.
+\url{https://doi.org/10.1016/j.trci.2017.12.002}.
+
+\bibitem[\citeproctext]{ref-coley2011suitability}
+Coley, Nicola, Sandrine Andrieu, Martin Jaros, Michael Weiner, Jesse
+Cedarbaum, and Bruno Vellas. 2011. {``Suitability of the Clinical
+Dementia Rating--Sum of Boxes as a Single Primary Endpoint for
+{Alzheimer's} Disease Trials.''} \emph{Alzheimer's \& Dementia} 7 (6):
+602--610.e2. \url{https://doi.org/10.1016/j.jalz.2011.01.005}.
+
+\bibitem[\citeproctext]{ref-vandyck2023lecanemab}
+{Dyck, Christopher H van, Chad J Swanson, Paul Aisen, et al.} 2023.
+{``Lecanemab in Early {Alzheimer's} Disease.''} \emph{New England
+Journal of Medicine} 388 (1): 9--21.
+\url{https://doi.org/10.1056/NEJMoa2212948}.
+
+\bibitem[\citeproctext]{ref-ema2018guideline}
+European Medicines Agency. 2018. \emph{Guideline on the Clinical
+Investigation of Medicines for the Treatment of {Alzheimer's} Disease}.
+CPMP/EWP/553/95 Rev.~2.
+
+\bibitem[\citeproctext]{ref-hartz2025clinical}
+Hartz, Sarah M, Suzanne E Schindler, Marie L Streitz, et al. 2025.
+{``Assessing the Clinical Meaningfulness of Slowing {CDR-SB} Progression
+with Disease- Modifying Therapies for {Alzheimer's} Disease.''}
+\emph{Alzheimer's \& Dementia: Translational Research \& Clinical
+Interventions} 11 (1): e70033. \url{https://doi.org/10.1002/trc2.70033}.
+
+\bibitem[\citeproctext]{ref-ich2019e9r1}
+International Council for Harmonisation. 2020. {``ICH {E9(R1)} Addendum
+on Estimands and Sensitivity Analysis in Clinical Trials.''}
+\emph{Statistics in Medicine} 39 (27): 3993--4012.
+\url{https://doi.org/10.1002/sim.8646}.
+
+\bibitem[\citeproctext]{ref-jamalian2023modeling}
+{Jamalian, Samira, Michael Dolton, Pascal Chanu, Vidya Ramakrishnan,
+Yesenia Franco, et al.} 2023. {``Modeling {Alzheimer's} Disease
+Progression Utilizing Clinical Trial and {ADNI} Data to Predict
+Longitudinal Trajectory of {CDR-SB}.''} \emph{CPT: Pharmacometrics \&
+Systems Pharmacology} 12 (7): 1029--42.
+\url{https://doi.org/10.1002/psp4.12974}.
+
+\bibitem[\citeproctext]{ref-mallinckrodt2008recommendations}
+Mallinckrodt, Craig H, Peter W Lane, Dan Schnell, Yahong Peng, and James
+P Mancuso. 2008. {``Recommendations for the Primary Analysis of
+Continuous Endpoints in Longitudinal Clinical Trials.''} \emph{Drug
+Information Journal} 42 (4): 303--19.
+\url{https://doi.org/10.1177/009286150804200402}.
+
+\bibitem[\citeproctext]{ref-novic2024nonlinear}
+Novic, Alan, Bodo Engel, Philip Scheltens, Frederik Barkhof, and
+Johannes Berkhof. 2024. {``Novel Non-Linear Models for Clinical Trial
+Analysis with Longitudinal Data: A Tutorial Using {SAS} for Both
+Frequentist and {Bayesian} Methods.''} \emph{Pharmaceutical Statistics},
+ahead of print. \url{https://doi.org/10.1002/pst.2394}.
+
+\bibitem[\citeproctext]{ref-sabanesbove2024mmrm}
+Sabanés Bové, Daniel, Jonathan Dedic, Doug Kelkhoff, Godwin Sabanero,
+and Liming Li. 2024. \emph{{mmrm}: Mixed Models for Repeated Measures}.
+\url{https://CRAN.R-project.org/package=mmrm}.
+
+\bibitem[\citeproctext]{ref-sims2023donanemab}
+{Sims, John R, Jennifer A Zimmer, Cynthia D Evans, et al.} 2023.
+{``Donanemab in Early Symptomatic {Alzheimer} Disease: The
+{TRAILBLAZER-ALZ 2} Randomized Clinical Trial.''} \emph{JAMA} 330 (6):
+512--27. \url{https://doi.org/10.1001/jama.2023.13239}.
+
+\bibitem[\citeproctext]{ref-fda2018guidance}
+U.S. Food and Drug Administration. 2018. \emph{Early {Alzheimer's}
+Disease: Developing Drugs for Treatment; Guidance for Industry}.
+\href{https://www.fda.gov/media/110903/download}{Https://www.fda.gov/media/110903/download}.
+
+\bibitem[\citeproctext]{ref-wang2022proportional}
+Wang, Jianing, Veronika Logovinsky, Dhairya L Bhatt, Yongqiang Tian,
+Radhika Bhore, and Reisa A Sperling. 2022. {``Proportional Constrained
+Longitudinal Data Analysis Models for Clinical Trials in Sporadic
+{Alzheimer's} Disease.''} \emph{Alzheimer's \& Dementia: Translational
+Research \& Clinical Interventions} 8 (1): e12286.
+\url{https://doi.org/10.1002/trc2.12286}.
+
+\end{CSLReferences}
+
+\end{document}
