@@ -19,7 +19,6 @@
 
 library(MASS)
 library(nlme)
-library(emmeans)
 
 simulate_one_trial <- function(
     n_per_arm    = 200,
@@ -76,19 +75,21 @@ simulate_one_trial <- function(
   dat$trt_f <- factor(dat$trt, labels = c("placebo", "active"))
   dat$visit_f <- factor(dat$visit)
   dat$id <- factor(dat$id)
+  dat$visit_num <- as.integer(dat$visit_f)
 
   dat
 }
 
 fit_models <- function(dat) {
   t_max <- max(dat$visit)
+  post <- dat[dat$visit > 0, ]
 
-  # Model 1: random-slopes MMRM (linear in time)
+  # Model 1: random-slopes (linear in time)
   fit_slope <- tryCatch({
     lme(
       y ~ trt_f * time_yr,
       random = ~ time_yr | id,
-      data = dat,
+      data = post,
       control = lmeControl(
         opt = "optim",
         maxIter = 200,
@@ -97,14 +98,15 @@ fit_models <- function(dat) {
     )
   }, error = function(e) NULL)
 
-  # Model 2: categorical-time MMRM (unstructured mean)
+  # Model 2: standard MMRM -- marginal model,
+  # unstructured covariance via gls
   fit_cat <- tryCatch({
-    lme(
+    gls(
       y ~ trt_f * visit_f,
-      random = ~ 1 | id,
-      data = dat,
-      correlation = corCompSymm(form = ~ 1 | id),
-      control = lmeControl(
+      data = post,
+      correlation = corSymm(form = ~ visit_num | id),
+      weights = varIdent(form = ~ 1 | visit_f),
+      control = glsControl(
         opt = "optim",
         maxIter = 200,
         msMaxIter = 200
@@ -114,6 +116,7 @@ fit_models <- function(dat) {
 
   results <- list()
 
+  # --- Extract slope model results ---
   if (!is.null(fit_slope)) {
     cf <- summary(fit_slope)$tTable
     row_nm <- "trt_factive:time_yr"
@@ -136,14 +139,34 @@ fit_models <- function(dat) {
     )
   }
 
+  # --- Extract categorical MMRM results ---
+  # The coefficient trt_factive:visit_f18 is the
+  # difference-in-differences: (active_18 - active_ref) -
+  # (placebo_18 - placebo_ref). Since visit_f ref = 3
+  # (first post-baseline), this equals the treatment
+  # effect at month 18 minus the treatment effect at
+  # month 3. We need the full treatment effect at 18,
+  # which is trt_factive + trt_factive:visit_f18.
   if (!is.null(fit_cat)) {
-    last_visit <- paste0("visit_f", t_max)
-    row_nm <- paste0("trt_factive:", last_visit)
     cf <- summary(fit_cat)$tTable
-    if (row_nm %in% rownames(cf)) {
-      est <- cf[row_nm, "Value"]
-      se  <- cf[row_nm, "Std.Error"]
-      pv  <- cf[row_nm, "p-value"]
+    last_visit_nm <- paste0("trt_factive:visit_f", t_max)
+    trt_main <- "trt_factive"
+    if (all(c(trt_main, last_visit_nm) %in% rownames(cf))) {
+      beta_vec <- cf[, "Value"]
+      vcov_mat <- vcov(fit_cat)
+      idx <- c(
+        which(rownames(cf) == trt_main),
+        which(rownames(cf) == last_visit_nm)
+      )
+      est <- beta_vec[trt_main] +
+        beta_vec[last_visit_nm]
+      se <- sqrt(
+        vcov_mat[idx[1], idx[1]] +
+          vcov_mat[idx[2], idx[2]] +
+          2 * vcov_mat[idx[1], idx[2]]
+      )
+      z <- est / se
+      pv <- 2 * pnorm(-abs(z))
       results$cat <- c(
         est = est, se = se, pval = pv, converged = 1
       )

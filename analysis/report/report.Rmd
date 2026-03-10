@@ -15,6 +15,7 @@ output:
     includes:
       in_header: "~/shr/preamble.tex"
 header-includes:
+   - \usepackage{placeins}
    - \rhead{MMRM Linearity Robustness}
    - \fancyfoot[L]{\currfilename}
    - \setlength{\headheight}{13.59999pt}
@@ -225,18 +226,25 @@ effect trajectories.
 ## Analysis models
 
 **Random-slopes model.** We fit a linear mixed-effects model
-with fixed effects for treatment, time (continuous, in
-years), and their interaction, plus random intercepts and
-random slopes for time. The treatment effect at 18 months is
-estimated as $\hat{\beta}_{\text{trt} \times \text{time}}
-\times 1.5$.
+(via `nlme::lme`) with fixed effects for treatment, time
+(continuous, in years), and their interaction, plus random
+intercepts and random slopes for time. The treatment effect
+at 18 months is estimated as $\hat{\beta}_{\text{trt}
+\times \text{time}} \times 1.5$. Both models are fit to
+post-baseline observations only (months 3 through 18).
 
-**Categorical-time model.** We fit a mixed-effects model
-with fixed effects for treatment, visit (categorical), and
-their interaction, plus a random intercept and compound
-symmetry residual correlation. The treatment effect at 18
-months is the estimated coefficient for the treatment-by-
-month-18 interaction.
+**Categorical-time MMRM.** We fit the standard marginal
+MMRM used in clinical trials (via `nlme::gls`) with fixed
+effects for treatment, visit (categorical), and their
+interaction, and a fully unstructured covariance matrix
+(heterogeneous variances and unstructured correlations
+across visits). This is the model recommended by
+@mallinckrodt2008recommendations and implemented in the
+`mmrm` R package [@sabanesbove2024mmrm]. The treatment
+effect at month 18 is estimated as the linear combination
+of the main treatment effect and the treatment-by-month-18
+interaction, with the standard error obtained via the delta
+method.
 
 ## Simulation procedure
 
@@ -317,6 +325,11 @@ ggplot(shape_dat, aes(
 
 ## Summary statistics
 
+Table 1 presents the full simulation results across all
+seven values of $\kappa$.
+
+\FloatBarrier
+
 ```{r tab-summary}
 tab_display <- sim_summary |>
   dplyr::select(
@@ -372,6 +385,17 @@ kbl(
 
 ## Bias
 
+Figure 2 displays the bias of each model as a function of
+$\kappa$. The categorical-time MMRM remains approximately
+unbiased across all conditions. The random-slopes model
+shows bias that increases with departure from linearity,
+particularly for early-onset patterns ($\kappa < 1$) where
+the linear model overestimates the treatment effect at
+intermediate time points and consequently distorts the
+18-month estimate.
+
+\FloatBarrier
+
 ```{r fig-bias, fig.cap="Bias in the estimated 18-month treatment effect as a function of the shape parameter. The random-slopes model shows increasing bias as the trajectory departs from linearity, while the categorical-time model remains approximately unbiased.", fig.width=5, fig.height=3}
 bias_dat <- sim_summary |>
   dplyr::select(kappa, slope_bias, cat_bias) |>
@@ -412,6 +436,16 @@ ggplot(bias_dat, aes(
 
 ## Power comparison
 
+Figure 3 compares the power of both models. Under linearity
+($\kappa = 1$), the random-slopes model is expected to
+achieve higher power due to its more parsimonious mean
+structure. As $\kappa$ departs from 1, the relative power
+of the two models shifts, reflecting the interplay between
+efficiency gains from parametric structure and losses from
+model misspecification.
+
+\FloatBarrier
+
 ```{r fig-power, fig.cap="Power to detect the 18-month treatment effect ($\\alpha = 0.05$, two-sided) as a function of the shape parameter.", fig.width=5, fig.height=3}
 power_dat <- sim_summary |>
   dplyr::select(kappa, slope_power, cat_power) |>
@@ -447,6 +481,8 @@ ggplot(power_dat, aes(
   ) +
   theme_minimal(base_size = 10)
 ```
+
+\FloatBarrier
 
 # Discussion
 

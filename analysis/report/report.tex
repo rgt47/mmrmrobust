@@ -5,7 +5,7 @@
   11pt,
 ]{article}
 \usepackage{xcolor}
-\usepackage[left=3cm,right=3in,top=2cm,bottom=2cm]{geometry}
+\usepackage[left=3cm,right=5cm,top=2cm,bottom=2cm]{geometry}
 \usepackage{amsmath,amssymb}
 \setcounter{secnumdepth}{5}
 \usepackage{iftex}
@@ -206,10 +206,12 @@ Alzheimer's disease (AD). The instrument integrates cognition and
 function into a single composite score ranging from 0 to 18, and it
 demonstrates superior responsiveness to change in early-stage
 populations compared with traditional cognitive scales such as the
-ADAS-Cog (Cedarbaum et al. 2013; Coley et al. 2011). Annual CDR-SB
+ADAS-Cog (\citeproc{ref-cedarbaum2013rationale}{Cedarbaum et al. 2013};
+\citeproc{ref-coley2011suitability}{Coley et al. 2011}). Annual CDR-SB
 progression rates in placebo arms of recent trials are approximately 1.3
 to 1.7 points per year for participants with baseline CDR global scores
-of 0.5 to 1.0 (Cedarbaum et al. 2013; Hartz et al. 2025).
+of 0.5 to 1.0 (\citeproc{ref-cedarbaum2013rationale}{Cedarbaum et al.
+2013}; \citeproc{ref-hartz2025clinical}{Hartz et al. 2025}).
 
 \subsection{Treatment effects from recent anti-amyloid
 trials}\label{treatment-effects-from-recent-anti-amyloid-trials}
@@ -219,9 +221,10 @@ provided the first evidence that amyloid-targeting therapies can slow
 clinical decline on CDR-SB. In the CLARITY-AD trial, lecanemab reduced
 18-month CDR-SB worsening by 0.45 points (27\% slowing) relative to
 placebo, with the treatment arm declining 1.21 points versus 1.66 in
-placebo ({Dyck et al.} 2023). The TRAILBLAZER-ALZ 2 trial of donanemab
-demonstrated a similar magnitude of slowing on CDR-SB in participants
-with low/medium tau burden ({Sims et al.} 2023). In both trials,
+placebo (\citeproc{ref-vandyck2023lecanemab}{{Dyck et al.} 2023}). The
+TRAILBLAZER-ALZ 2 trial of donanemab demonstrated a similar magnitude of
+slowing on CDR-SB in participants with low/medium tau burden
+(\citeproc{ref-sims2023donanemab}{{Sims et al.} 2023}). In both trials,
 inspection of the CDR-SB trajectories over time reveals a non-constant
 treatment difference: the separation between arms widens gradually, with
 the rate of separation appearing to change across the 18-month follow-up
@@ -238,7 +241,8 @@ choice between two estimands for these trials:
   change from baseline at the last scheduled visit (e.g., month 18).
   This corresponds to the categorical-time MMRM, which places no
   parametric constraint on how the mean response evolves over time
-  (Mallinckrodt et al. 2008).
+  (\citeproc{ref-mallinckrodt2008recommendations}{Mallinckrodt et al.
+  2008}).
 \item
   \textbf{Slope estimand:} The between-group difference in the rate of
   change per unit time. This corresponds to a random-slopes mixed model
@@ -250,14 +254,16 @@ The U.S. Food and Drug Administration's 2018 draft guidance on early AD
 drug development discusses the use of slope analyses as a potentially
 more sensitive approach for detecting disease-modifying effects,
 particularly when the mechanism is expected to produce a constant rate
-of slowing (U.S. Food and Drug Administration 2018). The European
-Medicines Agency's guideline similarly acknowledges slope-based
-endpoints for disease-modification claims, while also noting that the
-assumption of constant treatment effect rates must be verified (European
-Medicines Agency 2018). The ICH E9(R1) addendum on estimands provides
+of slowing (\citeproc{ref-fda2018guidance}{U.S. Food and Drug
+Administration 2018}). The European Medicines Agency's guideline
+similarly acknowledges slope-based endpoints for disease-modification
+claims, while also noting that the assumption of constant treatment
+effect rates must be verified (\citeproc{ref-ema2018guideline}{European
+Medicines Agency 2018}). The ICH E9(R1) addendum on estimands provides
 the formal framework for distinguishing these two targets of estimation,
 emphasizing that the choice of estimand should precede the choice of
-statistical model (International Council for Harmonisation 2020).
+statistical model (\citeproc{ref-ich2019e9r1}{International Council for
+Harmonisation 2020}).
 
 \subsection{Why linearity may not
 hold}\label{why-linearity-may-not-hold}
@@ -281,14 +287,16 @@ in AD trials is unlikely to be perfectly linear in time:
 \item
   \textbf{Nonlinear placebo progression.} Even if the treatment modifies
   the underlying rate by a constant fraction, nonlinearity in the
-  natural disease trajectory (documented by {Jamalian et al.} (2023)
-  using nonlinear mixed-effect models) would produce a nonlinear
-  absolute treatment difference over time.
+  natural disease trajectory (documented by {Jamalian et al.}
+  (\citeproc{ref-jamalian2023modeling}{2023}) using nonlinear
+  mixed-effect models) would produce a nonlinear absolute treatment
+  difference over time.
 \end{enumerate}
 
 Despite the clinical relevance of this question, there is limited
 simulation evidence quantifying how much nonlinearity the random-slopes
-model can tolerate. {Chen et al.} (2018) compared the slope model with
+model can tolerate. {Chen et al.}
+(\citeproc{ref-chen2018simulation}{2018}) compared the slope model with
 the categorical-time MMRM for ADAS-Cog data, finding that the slope
 model is more powerful when linearity approximately holds, but biased
 otherwise. However, that study did not systematically vary the degree of
@@ -431,14 +439,14 @@ All curves reach the same total effect at month 18.}
 \cmidrule(l{3pt}r{3pt}){2-6} \cmidrule(l{3pt}r{3pt}){7-11}
 $\kappa$ & Bias & Emp SE & Mod SE & Power & Cov & Bias & Emp SE & Mod SE & Power & Cov\\
 \midrule
-\cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.076} & \cellcolor{gray!10}{0.194} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.5} & \cellcolor{gray!10}{1.0} & \cellcolor{gray!10}{0.031} & \cellcolor{gray!10}{0.169} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.9}\\
-0.5 & 0.043 & 0.244 & 0.188 & 0.5 & 1.0 & 0.019 & 0.253 & 0.161 & 0.6 & 0.8\\
-\cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.035} & \cellcolor{gray!10}{0.182} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.4} & \cellcolor{gray!10}{1.0} & \cellcolor{gray!10}{0.050} & \cellcolor{gray!10}{0.191} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.9}\\
-1.0 & -0.041 & 0.193 & 0.186 & 0.8 & 1.0 & -0.030 & 0.233 & 0.160 & 0.7 & 0.8\\
-\cellcolor{gray!10}{1.5} & \cellcolor{gray!10}{-0.019} & \cellcolor{gray!10}{0.174} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.8} & \cellcolor{gray!10}{0.9} & \cellcolor{gray!10}{-0.013} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.9} & \cellcolor{gray!10}{0.9}\\
+\cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.093} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.460} & \cellcolor{gray!10}{0.930} & \cellcolor{gray!10}{0.016} & \cellcolor{gray!10}{0.186} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.740} & \cellcolor{gray!10}{0.890}\\
+0.5 & 0.027 & 0.177 & 0.189 & 0.600 & 0.965 & -0.011 & 0.186 & 0.162 & 0.770 & 0.900\\
+\cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{0.191} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.600} & \cellcolor{gray!10}{0.920} & \cellcolor{gray!10}{0.024} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.735} & \cellcolor{gray!10}{0.925}\\
+1.0 & -0.008 & 0.182 & 0.187 & 0.675 & 0.975 & -0.012 & 0.182 & 0.161 & 0.795 & 0.925\\
+\cellcolor{gray!10}{1.5} & \cellcolor{gray!10}{-0.019} & \cellcolor{gray!10}{0.197} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.670} & \cellcolor{gray!10}{0.935} & \cellcolor{gray!10}{-0.005} & \cellcolor{gray!10}{0.195} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.760} & \cellcolor{gray!10}{0.925}\\
 \addlinespace
-2.0 & 0.035 & 0.153 & 0.189 & 0.8 & 1.0 & 0.055 & 0.138 & 0.161 & 0.7 & 1.0\\
-\cellcolor{gray!10}{3.0} & \cellcolor{gray!10}{0.164} & \cellcolor{gray!10}{0.253} & \cellcolor{gray!10}{0.189} & \cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.8} & \cellcolor{gray!10}{0.135} & \cellcolor{gray!10}{0.254} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.5} & \cellcolor{gray!10}{0.6}\\
+2.0 & 0.006 & 0.182 & 0.187 & 0.690 & 0.935 & 0.003 & 0.187 & 0.161 & 0.785 & 0.910\\
+\cellcolor{gray!10}{3.0} & \cellcolor{gray!10}{0.022} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.630} & \cellcolor{gray!10}{0.950} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.770} & \cellcolor{gray!10}{0.905}\\
 \bottomrule
 \end{tabular}}
 \end{table}
@@ -473,8 +481,9 @@ When the treatment effect is truly linear (\(\kappa = 1\)), the
 random-slopes model is expected to show negligible bias and higher power
 than the categorical-time model, consistent with the general principle
 that correctly specified parametric models are more efficient than
-nonparametric alternatives ({Chen et al.} 2018; Mallinckrodt et al.
-2008).
+nonparametric alternatives (\citeproc{ref-chen2018simulation}{{Chen et
+al.} 2018}; \citeproc{ref-mallinckrodt2008recommendations}{Mallinckrodt
+et al. 2008}).
 
 As \(\kappa\) departs from 1, the random-slopes model incurs systematic
 bias in estimating the 18-month treatment contrast. This occurs because
@@ -498,24 +507,28 @@ with categorical-time MMRM is the safer choice.
 
 This conclusion aligns with the regulatory perspective. The FDA guidance
 notes that slope analyses may be considered when `the course of the
-disease is predictable and approximately linear' (U.S. Food and Drug
-Administration 2018). The EMA guideline similarly conditions slope-based
-claims on verifiable linearity (European Medicines Agency 2018). The ICH
-E9(R1) estimand framework reinforces that the estimand (slope vs.
-final-visit) should be chosen on scientific grounds before the
-statistical model is specified (International Council for Harmonisation
-2020).
+disease is predictable and approximately linear'
+(\citeproc{ref-fda2018guidance}{U.S. Food and Drug Administration
+2018}). The EMA guideline similarly conditions slope-based claims on
+verifiable linearity (\citeproc{ref-ema2018guideline}{European Medicines
+Agency 2018}). The ICH E9(R1) estimand framework reinforces that the
+estimand (slope vs. final-visit) should be chosen on scientific grounds
+before the statistical model is specified
+(\citeproc{ref-ich2019e9r1}{International Council for Harmonisation
+2020}).
 
 The results from recent Phase 3 trials are informative. Visual
-inspection of CDR-SB trajectories in CLARITY-AD ({Dyck et al.} 2023) and
-TRAILBLAZER-ALZ 2 ({Sims et al.} 2023) suggests that the treatment
-effect separation is not perfectly linear. In CLARITY-AD, the
-treatment-placebo difference appears to widen progressively, consistent
-with \(\kappa > 1\) (delayed onset). This is biologically plausible
-given the time required for amyloid clearance. The proportional MMRM
-approach of Wang et al. (2022) offers an intermediate option that
-assumes the treatment effect is proportional to the placebo trajectory
-without requiring linearity per se.
+inspection of CDR-SB trajectories in CLARITY-AD
+(\citeproc{ref-vandyck2023lecanemab}{{Dyck et al.} 2023}) and
+TRAILBLAZER-ALZ 2 (\citeproc{ref-sims2023donanemab}{{Sims et al.} 2023})
+suggests that the treatment effect separation is not perfectly linear.
+In CLARITY-AD, the treatment-placebo difference appears to widen
+progressively, consistent with \(\kappa > 1\) (delayed onset). This is
+biologically plausible given the time required for amyloid clearance.
+The proportional MMRM approach of Wang et al.
+(\citeproc{ref-wang2022proportional}{2022}) offers an intermediate
+option that assumes the treatment effect is proportional to the placebo
+trajectory without requiring linearity per se.
 
 \subsection{Limitations}\label{limitations}
 
@@ -544,14 +557,16 @@ E9(R1) framework.
   compounds the effects of mean structure misspecification.
 \item
   \textbf{Proportional and constrained models.} Evaluate the
-  proportional MMRM (Wang et al. 2022) and constrained longitudinal data
-  analysis (cLDA) as intermediate models that borrow strength across
-  time without full linearity.
+  proportional MMRM (\citeproc{ref-wang2022proportional}{Wang et al.
+  2022}) and constrained longitudinal data analysis (cLDA) as
+  intermediate models that borrow strength across time without full
+  linearity.
 \item
   \textbf{Nonlinear mixed-effects models.} Investigate whether fitting a
   power-function or sigmoidal treatment effect model can recover the
   true \(\kappa\) and provide unbiased estimates even under strong
-  nonlinearity, following the approach of Novic et al. (2024).
+  nonlinearity, following the approach of Novic et al.
+  (\citeproc{ref-novic2024nonlinear}{2024}).
 \item
   \textbf{Bayesian MMRM.} Evaluate whether Bayesian approaches with
   weakly informative priors on the treatment effect shape can adaptively
@@ -561,12 +576,14 @@ E9(R1) framework.
   \textbf{Software development.} Develop an R package that implements
   the simulation framework and provides diagnostic tools for assessing
   linearity of the treatment effect in observed trial data, building on
-  the \texttt{mmrm} package infrastructure (Sabanés Bové et al. 2024).
+  the \texttt{mmrm} package infrastructure
+  (\citeproc{ref-sabanesbove2024mmrm}{Sabanés Bové et al. 2024}).
 \item
   \textbf{Applied re-analysis.} Apply these methods to individual
   patient-level data from completed AD trials (e.g., ADNI placebo arms)
   to estimate the empirical \(\kappa\) for different endpoints and
-  disease stages ({Jamalian et al.} 2023).
+  disease stages (\citeproc{ref-jamalian2023modeling}{{Jamalian et al.}
+  2023}).
 \end{enumerate}
 
 \section*{References}\label{references}
