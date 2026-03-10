@@ -83,6 +83,8 @@ simulate_one_trial <- function(
 fit_models <- function(dat) {
   t_max <- max(dat$visit)
   post <- dat[dat$visit > 0, ]
+  post$visit_f <- droplevels(post$visit_f)
+  post$visit_num <- as.integer(post$visit_f)
 
   # Model 1: random-slopes (linear in time)
   fit_slope <- tryCatch({
@@ -158,13 +160,14 @@ fit_models <- function(dat) {
         which(rownames(cf) == trt_main),
         which(rownames(cf) == last_visit_nm)
       )
-      est <- beta_vec[trt_main] +
-        beta_vec[last_visit_nm]
-      se <- sqrt(
+      est <- unname(
+        beta_vec[trt_main] + beta_vec[last_visit_nm]
+      )
+      se <- unname(sqrt(
         vcov_mat[idx[1], idx[1]] +
           vcov_mat[idx[2], idx[2]] +
           2 * vcov_mat[idx[1], idx[2]]
-      )
+      ))
       z <- est / se
       pv <- 2 * pnorm(-abs(z))
       results$cat <- c(

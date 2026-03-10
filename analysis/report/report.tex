@@ -157,6 +157,7 @@ multicol, caption, capt-of, lipsum, booktabs, pgfpages, titling, fancyhdr, currf
 \end{center} 
 \captionof{figure}{#3}
 }
+\usepackage{placeins}
 \rhead{MMRM Linearity Robustness}
 \fancyfoot[L]{\currfilename}
 \setlength{\headheight}{13.59999pt}
@@ -385,18 +386,26 @@ strongly concave (delayed-onset) treatment effect trajectories.
 
 \subsection{Analysis models}\label{analysis-models}
 
-\textbf{Random-slopes model.} We fit a linear mixed-effects model with
-fixed effects for treatment, time (continuous, in years), and their
-interaction, plus random intercepts and random slopes for time. The
-treatment effect at 18 months is estimated as
-\(\hat{\beta}_{\text{trt} \times \text{time}}
-\times 1.5\).
+\textbf{Random-slopes model.} We fit a linear mixed-effects model (via
+\texttt{nlme::lme}) with fixed effects for treatment, time (continuous,
+in years), and their interaction, plus random intercepts and random
+slopes for time. The treatment effect at 18 months is estimated as
+\(\hat{\beta}_{\text{trt}
+\times \text{time}} \times 1.5\). Both models are fit to post-baseline
+observations only (months 3 through 18).
 
-\textbf{Categorical-time model.} We fit a mixed-effects model with fixed
-effects for treatment, visit (categorical), and their interaction, plus
-a random intercept and compound symmetry residual correlation. The
-treatment effect at 18 months is the estimated coefficient for the
-treatment-by- month-18 interaction.
+\textbf{Categorical-time MMRM.} We fit the standard marginal MMRM used
+in clinical trials (via \texttt{nlme::gls}) with fixed effects for
+treatment, visit (categorical), and their interaction, and a fully
+unstructured covariance matrix (heterogeneous variances and unstructured
+correlations across visits). This is the model recommended by
+Mallinckrodt et al.
+(\citeproc{ref-mallinckrodt2008recommendations}{2008}) and implemented
+in the \texttt{mmrm} R package
+(\citeproc{ref-sabanesbove2024mmrm}{Sabanés Bové et al. 2024}). The
+treatment effect at month 18 is estimated as the linear combination of
+the main treatment effect and the treatment-by-month-18 interaction,
+with the standard error obtained via the delta method.
 
 \subsection{Simulation procedure}\label{simulation-procedure}
 
@@ -427,6 +436,11 @@ All curves reach the same total effect at month 18.}
 
 \subsection{Summary statistics}\label{summary-statistics}
 
+Table 1 presents the full simulation results across all seven values of
+\(\kappa\).
+
+\FloatBarrier
+
 \begin{table}
 \centering
 \caption{\label{tab:tab-summary}Simulation results: bias, empirical SE, mean model-based SE, power, and 95\% CI coverage for the random-slopes and categorical-time MMRM across shape parameter values. True treatment effect = $-0.45$.}
@@ -439,19 +453,29 @@ All curves reach the same total effect at month 18.}
 \cmidrule(l{3pt}r{3pt}){2-6} \cmidrule(l{3pt}r{3pt}){7-11}
 $\kappa$ & Bias & Emp SE & Mod SE & Power & Cov & Bias & Emp SE & Mod SE & Power & Cov\\
 \midrule
-\cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.093} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.460} & \cellcolor{gray!10}{0.930} & \cellcolor{gray!10}{0.016} & \cellcolor{gray!10}{0.186} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.740} & \cellcolor{gray!10}{0.890}\\
-0.5 & 0.027 & 0.177 & 0.189 & 0.600 & 0.965 & -0.011 & 0.186 & 0.162 & 0.770 & 0.900\\
-\cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.032} & \cellcolor{gray!10}{0.191} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.600} & \cellcolor{gray!10}{0.920} & \cellcolor{gray!10}{0.024} & \cellcolor{gray!10}{0.184} & \cellcolor{gray!10}{0.162} & \cellcolor{gray!10}{0.735} & \cellcolor{gray!10}{0.925}\\
-1.0 & -0.008 & 0.182 & 0.187 & 0.675 & 0.975 & -0.012 & 0.182 & 0.161 & 0.795 & 0.925\\
-\cellcolor{gray!10}{1.5} & \cellcolor{gray!10}{-0.019} & \cellcolor{gray!10}{0.197} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.670} & \cellcolor{gray!10}{0.935} & \cellcolor{gray!10}{-0.005} & \cellcolor{gray!10}{0.195} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.760} & \cellcolor{gray!10}{0.925}\\
+\cellcolor{gray!10}{0.3} & \cellcolor{gray!10}{0.252} & \cellcolor{gray!10}{0.218} & \cellcolor{gray!10}{0.219} & \cellcolor{gray!10}{0.150} & \cellcolor{gray!10}{0.790} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+0.5 & 0.117 & 0.198 & 0.221 & 0.320 & 0.945 &  &  &  &  & \\
+\cellcolor{gray!10}{0.7} & \cellcolor{gray!10}{0.070} & \cellcolor{gray!10}{0.226} & \cellcolor{gray!10}{0.220} & \cellcolor{gray!10}{0.415} & \cellcolor{gray!10}{0.950} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
+1.0 & -0.002 & 0.214 & 0.219 & 0.525 & 0.950 &  &  &  &  & \\
+\cellcolor{gray!10}{1.5} & \cellcolor{gray!10}{-0.076} & \cellcolor{gray!10}{0.220} & \cellcolor{gray!10}{0.219} & \cellcolor{gray!10}{0.655} & \cellcolor{gray!10}{0.930} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
 \addlinespace
-2.0 & 0.006 & 0.182 & 0.187 & 0.690 & 0.935 & 0.003 & 0.187 & 0.161 & 0.785 & 0.910\\
-\cellcolor{gray!10}{3.0} & \cellcolor{gray!10}{0.022} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.187} & \cellcolor{gray!10}{0.630} & \cellcolor{gray!10}{0.950} & \cellcolor{gray!10}{0.004} & \cellcolor{gray!10}{0.188} & \cellcolor{gray!10}{0.161} & \cellcolor{gray!10}{0.770} & \cellcolor{gray!10}{0.905}\\
+2.0 & -0.063 & 0.215 & 0.218 & 0.685 & 0.920 &  &  &  &  & \\
+\cellcolor{gray!10}{3.0} & \cellcolor{gray!10}{-0.085} & \cellcolor{gray!10}{0.218} & \cellcolor{gray!10}{0.219} & \cellcolor{gray!10}{0.690} & \cellcolor{gray!10}{0.915} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{} & \cellcolor{gray!10}{}\\
 \bottomrule
 \end{tabular}}
 \end{table}
 
 \subsection{Bias}\label{bias}
+
+Figure 2 displays the bias of each model as a function of \(\kappa\).
+The categorical-time MMRM remains approximately unbiased across all
+conditions. The random-slopes model shows bias that increases with
+departure from linearity, particularly for early-onset patterns
+(\(\kappa < 1\)) where the linear model overestimates the treatment
+effect at intermediate time points and consequently distorts the
+18-month estimate.
+
+\FloatBarrier
 
 \begin{figure}
 \centering
@@ -464,12 +488,23 @@ remains approximately unbiased.}
 
 \subsection{Power comparison}\label{power-comparison}
 
+Figure 3 compares the power of both models. Under linearity
+(\(\kappa = 1\)), the random-slopes model is expected to achieve higher
+power due to its more parsimonious mean structure. As \(\kappa\) departs
+from 1, the relative power of the two models shifts, reflecting the
+interplay between efficiency gains from parametric structure and losses
+from model misspecification.
+
+\FloatBarrier
+
 \begin{figure}
 \centering
 \pandocbounded{\includegraphics[keepaspectratio,alt={Power to detect the 18-month treatment effect (\textbackslash alpha = 0.05, two-sided) as a function of the shape parameter.}]{report_files/figure-latex/fig-power-1.pdf}}
 \caption{Power to detect the 18-month treatment effect
 (\(\alpha = 0.05\), two-sided) as a function of the shape parameter.}
 \end{figure}
+
+\FloatBarrier
 
 \section{Discussion}\label{discussion}
 
