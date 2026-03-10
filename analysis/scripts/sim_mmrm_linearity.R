@@ -19,6 +19,7 @@
 
 library(MASS)
 library(nlme)
+library(mmrm)
 
 simulate_one_trial <- function(
     n_per_arm    = 200,
@@ -101,18 +102,11 @@ fit_models <- function(dat) {
   }, error = function(e) NULL)
 
   # Model 2: standard MMRM -- marginal model,
-  # unstructured covariance via gls
+  # unstructured covariance via mmrm package
   fit_cat <- tryCatch({
-    gls(
-      y ~ trt_f * visit_f,
-      data = post,
-      correlation = corSymm(form = ~ visit_num | id),
-      weights = varIdent(form = ~ 1 | visit_f),
-      control = glsControl(
-        opt = "optim",
-        maxIter = 200,
-        msMaxIter = 200
-      )
+    mmrm(
+      y ~ trt_f * visit_f + us(visit_f | id),
+      data = post
     )
   }, error = function(e) NULL)
 
@@ -142,36 +136,24 @@ fit_models <- function(dat) {
   }
 
   # --- Extract categorical MMRM results ---
-  # The coefficient trt_factive:visit_f18 is the
-  # difference-in-differences: (active_18 - active_ref) -
-  # (placebo_18 - placebo_ref). Since visit_f ref = 3
-  # (first post-baseline), this equals the treatment
-  # effect at month 18 minus the treatment effect at
-  # month 3. We need the full treatment effect at 18,
-  # which is trt_factive + trt_factive:visit_f18.
+  # trt_factive = treatment effect at reference visit (month 3)
+  # trt_factive:visit_f18 = additional effect at month 18
+  # Treatment effect at 18 = sum of both coefficients
   if (!is.null(fit_cat)) {
-    cf <- summary(fit_cat)$tTable
+    coefs <- coef(fit_cat)
     last_visit_nm <- paste0("trt_factive:visit_f", t_max)
     trt_main <- "trt_factive"
-    if (all(c(trt_main, last_visit_nm) %in% rownames(cf))) {
-      beta_vec <- cf[, "Value"]
-      vcov_mat <- vcov(fit_cat)
-      idx <- c(
-        which(rownames(cf) == trt_main),
-        which(rownames(cf) == last_visit_nm)
-      )
-      est <- unname(
-        beta_vec[trt_main] + beta_vec[last_visit_nm]
-      )
-      se <- unname(sqrt(
-        vcov_mat[idx[1], idx[1]] +
-          vcov_mat[idx[2], idx[2]] +
-          2 * vcov_mat[idx[1], idx[2]]
-      ))
-      z <- est / se
-      pv <- 2 * pnorm(-abs(z))
+    if (all(c(trt_main, last_visit_nm) %in% names(coefs))) {
+      L <- numeric(length(coefs))
+      names(L) <- names(coefs)
+      L[trt_main] <- 1
+      L[last_visit_nm] <- 1
+      contrast <- df_1d(fit_cat, L)
       results$cat <- c(
-        est = est, se = se, pval = pv, converged = 1
+        est = contrast$est,
+        se = contrast$se,
+        pval = contrast$p_val,
+        converged = 1
       )
     } else {
       results$cat <- c(

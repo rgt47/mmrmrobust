@@ -34,6 +34,7 @@ library(knitr)
 library(kableExtra)
 library(MASS)
 library(nlme)
+library(mmrm)
 
 opts_chunk$set(
   warning = FALSE,
@@ -257,7 +258,7 @@ replicates.
 ```{r run-sim, cache=TRUE}
 source("../scripts/sim_mmrm_linearity.R")
 
-n_sim_reps <- 100  # increase to 1000+ for publication
+n_sim_reps <- 200  # increase to 1000+ for publication
 sim_raw <- run_simulation(
   n_rep     = n_sim_reps,
   kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
