@@ -126,14 +126,15 @@
 \urlstyle{same}
 \hypersetup{
   pdftitle={Robustness of the Linearity Assumption in Random-Slopes MMRM for Alzheimer's Disease Trials},
-  pdfauthor={R.G. Thomas},
+  pdfauthor={Ronald G. Thomas, Ph.D.},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 \title{Robustness of the Linearity Assumption in Random-Slopes MMRM for
 Alzheimer's Disease Trials}
-\author{R.G. Thomas}
-\date{April 19, 2026}
+\author{Ronald G. Thomas,
+Ph.D.\thanks{Wertheim School of Public Health, UCSD; ORCID: 0000-0003-1686-4965}}
+\date{May 11, 2026}
 
 \begin{document}
 \maketitle
@@ -392,6 +393,19 @@ adequate for initial iteration but should be raised for publication.
 
 \section{Results}\label{results}
 
+\subsection{Headline findings}\label{headline-findings}
+
+Under linear treatment accrual (\(\kappa = 1\)), both the random-slopes
+MMRM and the categorical-time MMRM recover the true effect with
+negligible bias (0.002 and 0.003 respectively, MCSE 0.007 and 0.006).
+Across all 7 values of \(\kappa \in
+\{0.3, 0.5, 0.7, 1, 1.5, 2, 3\}\), the random-slopes estimator's largest
+absolute bias was 0.227 at \(\kappa = 0.3\), while the categorical-time
+MMRM never exceeded 0.007. Coverage of the random-slopes confidence
+interval ranged from 0.815 to 0.946; the categorical-time MMRM
+maintained coverage in {[}0.936, 0.959{]} across the same range. Full
+Morris Table 6 MCSEs are reported in the tables below.
+
 \subsection{Treatment effect shape}\label{treatment-effect-shape}
 
 Figure 1 illustrates the treatment effect trajectories \(g(t, \kappa)\)
@@ -623,6 +637,14 @@ audit is at \texttt{docs/morris-audit-2026-04-17.md}.
 
 A remediation plan is documented in the audit file and will be executed
 in a subsequent revision.
+
+\vfill
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+\emph{Rendered on 2026-05-11 at 18:42 PDT.}\\
+\emph{Source:
+\texttt{\textasciitilde{}/prj/res/08-mmrm-linearity-robust/mmrmrobust/analysis/report/report.Rmd}}
 
 \protect\phantomsection\label{refs}
 \begin{CSLReferences}{0}{1}
