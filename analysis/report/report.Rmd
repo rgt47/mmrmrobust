@@ -161,7 +161,7 @@ of nonlinearity, nor did it focus on CDR-SB.
 
 ## Present study
 
-This report uses Monte Carlo simulation to evaluate the
+We use Monte Carlo simulation to evaluate the
 robustness of the random-slopes MMRM to departures from
 linearity in the treatment effect trajectory. We simulate
 18-month AD trials with CDR-SB as the primary endpoint,
