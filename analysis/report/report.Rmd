@@ -150,13 +150,13 @@ linear in time:
    mixed-effect models) would produce a nonlinear absolute
    treatment difference over time.
 
-Despite the clinical relevance of this question, there is
-limited simulation evidence quantifying how much nonlinearity
+Despite the clinical relevance of this question, limited
+simulation evidence exists quantifying how much nonlinearity
 the random-slopes model can tolerate. @chen2018simulation
 compared the slope model with the categorical-time MMRM for
 ADAS-Cog data, finding that the slope model is more powerful
 when linearity approximately holds, but biased otherwise.
-However, that study did not systematically vary the degree
+That study, however, did not systematically vary the degree
 of nonlinearity, nor did it focus on CDR-SB.
 
 ## Present study
@@ -321,9 +321,9 @@ slope_cov_range <- range(sim_summary$slope_coverage, na.rm = TRUE)
 cat_cov_range <- range(sim_summary$cat_coverage, na.rm = TRUE)
 ```
 
-Under linear treatment accrual ($\kappa = 1$), both the
-random-slopes MMRM and the categorical-time MMRM recover
-the true effect with negligible bias
+We observe that under linear treatment accrual ($\kappa = 1$),
+both the random-slopes MMRM and the categorical-time MMRM
+recover the true effect with negligible bias
 (`r sprintf('%.3f', linear_row$slope_bias)` and
 `r sprintf('%.3f', linear_row$cat_bias)` respectively,
 MCSE `r sprintf('%.3f', linear_row$mcse_slope_bias)` and
@@ -459,13 +459,13 @@ kbl(
 ## Bias
 
 Figure 2 displays the bias of each model as a function of
-$\kappa$. The categorical-time MMRM remains approximately
-unbiased across all conditions. The random-slopes model
-shows bias that increases with departure from linearity,
-particularly for early-onset patterns ($\kappa < 1$) where
-the linear model overestimates the treatment effect at
-intermediate time points and consequently distorts the
-18-month estimate.
+$\kappa$. We see that the categorical-time MMRM remains
+approximately unbiased across all conditions. The random-
+slopes model shows bias that increases with departure from
+linearity, particularly for early-onset patterns
+($\kappa < 1$) where the linear model overestimates the
+treatment effect at intermediate time points and consequently
+distorts the 18-month estimate.
 
 \FloatBarrier
 
@@ -559,9 +559,10 @@ ggplot(power_dat, aes(
 
 # Discussion
 
-The simulation results quantify the bias-variance tradeoff
-between the random-slopes and categorical-time MMRM when
-the treatment effect in an AD trial departs from linearity.
+In this study, we have endeavored to quantify the bias-
+variance tradeoff between the random-slopes and categorical-
+time MMRM when the treatment effect in an AD trial departs
+from linearity.
 
 When the treatment effect is truly linear ($\kappa = 1$),
 the random-slopes model is expected to show negligible bias
@@ -582,16 +583,16 @@ constraint on the shape of the mean trajectory and thus
 remains approximately unbiased regardless of $\kappa$.
 
 The practical implication for AD trial design is that the
-choice between slope and final-visit estimands should be
-informed by the expected treatment effect trajectory. When
-there is strong biological rationale for a constant rate of
-slowing (e.g., a treatment that directly modulates the
-underlying disease rate), the slope estimand and
-random-slopes model offer a power advantage. When the
-mechanism suggests delayed onset (as with amyloid-clearing
-antibodies that require months to achieve plaque reduction)
-or early plateau, the final-visit estimand with
-categorical-time MMRM is the safer choice.
+choice between slope and final-visit estimands should, in our
+view, be informed by the expected treatment effect trajectory.
+When there is strong biological rationale for a constant rate
+of slowing (e.g., a treatment that directly modulates the
+underlying disease rate), the slope estimand and random-slopes
+model offer a power advantage. When the mechanism suggests
+delayed onset (as with amyloid-clearing antibodies that
+require months to achieve plaque reduction) or early plateau,
+the final-visit estimand with categorical-time MMRM is the
+safer choice.
 
 This conclusion aligns with the regulatory perspective. The
 FDA guidance notes that slope analyses may be considered
@@ -603,7 +604,7 @@ framework reinforces that the estimand (slope vs.
 final-visit) should be chosen on scientific grounds before
 the statistical model is specified [@ich2019e9r1].
 
-The results from recent Phase 3 trials are informative.
+The results from recent Phase 3 trials are instructive.
 Visual inspection of CDR-SB trajectories in CLARITY-AD
 [@vandyck2023lecanemab] and TRAILBLAZER-ALZ 2
 [@sims2023donanemab] suggests that the treatment effect
@@ -611,21 +612,21 @@ separation is not perfectly linear. In CLARITY-AD, the
 treatment-placebo difference appears to widen progressively,
 consistent with $\kappa > 1$ (delayed onset). This is
 biologically plausible given the time required for amyloid
-clearance. The proportional MMRM approach of @wang2022proportional
-offers an intermediate option that assumes the treatment effect
-is proportional to the placebo trajectory without requiring
-linearity per se.
+clearance. The proportional MMRM approach of
+@wang2022proportional offers an intermediate option that
+assumes the treatment effect is proportional to the placebo
+trajectory without requiring linearity per se.
 
 ## Limitations
 
-The simulation uses a relatively simple data-generating model
-with Gaussian outcomes and no missing data. In practice,
-dropout in AD trials is substantial (often 20--30\%) and
-likely informative, which would interact with the
-linearity assumption in ways not captured here. The
-AR(1) error structure may not fully represent the complex
-correlation patterns in real CDR-SB data. Future work
-should incorporate realistic dropout mechanisms and evaluate
+We should note that the simulation uses a relatively simple
+data-generating model with Gaussian outcomes and no missing
+data. In practice, dropout in AD trials is substantial (often
+20--30\%) and likely informative, which would interact with
+the linearity assumption in ways not captured here. The AR(1)
+error structure may not fully represent the complex
+correlation patterns in real CDR-SB data. Future work might
+incorporate realistic dropout mechanisms and evaluate
 sensitivity analyses under the ICH E9(R1) framework.
 
 # Future research
@@ -673,20 +674,24 @@ sensitivity analyses under the ICH E9(R1) framework.
 
 ## Morris et al. (2019) ADEMP Compliance
 
-This simulation study was audited against the reporting standards
-proposed by Morris, White, and Crowther [-@morris2019using]. The full
-audit is at `docs/morris-audit-2026-04-17.md`.
+We audited this simulation study against the reporting
+standards proposed by Morris, White, and Crowther
+[-@morris2019using]. The full audit is recorded at
+`docs/morris-audit-2026-04-17.md`.
 
 **Verdict:** Partially compliant.
 
 **Key gaps identified:**
 
-- `n_rep` mismatch between report (200) and script default (1000).
-- `set.seed()` called inside worker function, not once at program start.
-- No Monte Carlo SE on bias, empirical SE, coverage, or power.
+- `n_rep` mismatch between report (200) and script default
+  (1000).
+- `set.seed()` is called inside the worker function rather
+  than once at program start.
+- No Monte Carlo SE is reported on bias, empirical SE,
+  coverage, or power.
 
-A remediation plan is documented in the audit file and will be
-executed in a subsequent revision.
+A remediation plan is recorded in the audit file and will
+be taken up in a subsequent revision.
 
 
 ```{r footer, echo=FALSE, results='asis'}
