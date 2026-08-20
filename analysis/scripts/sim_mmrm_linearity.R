@@ -81,13 +81,20 @@ simulate_one_trial <- function(
   dat
 }
 
-fit_models <- function(dat) {
+fit_models <- function(dat, fit_constrained = TRUE) {
   t_max <- max(dat$visit)
   post <- dat[dat$visit > 0, ]
   post$visit_f <- droplevels(post$visit_f)
   post$visit_num <- as.integer(post$visit_f)
 
-  # Model 1: random-slopes (linear in time)
+  # Model 1: random-slopes (linear in time), unconstrained. Includes
+  # a treatment main effect even though trt is randomized and the
+  # model is fit to post-baseline data only (t = 0 excluded), so the
+  # main effect is not identified against a true baseline difference
+  # of 0. The 18-month contrast below discards the fitted main
+  # effect and uses only the interaction * 1.5, which is an
+  # incomplete model-implied contrast (pub_review whitepaper
+  # 2026-08-16, major issue 2).
   fit_slope <- tryCatch({
     lme(
       y ~ trt_f * time_yr,
@@ -100,6 +107,29 @@ fit_models <- function(dat) {
       )
     )
   }, error = function(e) NULL)
+
+  # Model 1b: constrained random-slopes model that omits the
+  # treatment main effect, imposing equality of the two arms at
+  # baseline (as in cLDA; Liang and Zeger 2000). This is the
+  # estimator remediation called for in major issue 2: it removes
+  # the redundant, unidentified main effect that inflates the
+  # interaction variance under the unconstrained specification.
+  fit_slope_c <- if (fit_constrained) {
+    tryCatch({
+      lme(
+        y ~ time_yr + trt_f:time_yr,
+        random = ~ time_yr | id,
+        data = post,
+        control = lmeControl(
+          opt = "optim",
+          maxIter = 200,
+          msMaxIter = 200
+        )
+      )
+    }, error = function(e) NULL)
+  } else {
+    NULL
+  }
 
   # Model 2: standard MMRM -- marginal model,
   # unstructured covariance via mmrm package
@@ -131,6 +161,32 @@ fit_models <- function(dat) {
     }
   } else {
     results$slope <- c(
+      est = NA, se = NA, pval = NA, converged = 0
+    )
+  }
+
+  # --- Extract constrained slope model results ---
+  if (!is.null(fit_slope_c)) {
+    cf_c <- summary(fit_slope_c)$tTable
+    row_nm_c <- "time_yr:trt_factive"
+    if (!(row_nm_c %in% rownames(cf_c))) {
+      row_nm_c <- "trt_factive:time_yr"
+    }
+    if (row_nm_c %in% rownames(cf_c)) {
+      t_max_yr <- t_max / 12
+      est_c <- cf_c[row_nm_c, "Value"] * t_max_yr
+      se_c  <- cf_c[row_nm_c, "Std.Error"] * t_max_yr
+      pv_c  <- cf_c[row_nm_c, "p-value"]
+      results$slope_c <- c(
+        est = est_c, se = se_c, pval = pv_c, converged = 1
+      )
+    } else {
+      results$slope_c <- c(
+        est = NA, se = NA, pval = NA, converged = 0
+      )
+    }
+  } else {
+    results$slope_c <- c(
       est = NA, se = NA, pval = NA, converged = 0
     )
   }
@@ -193,17 +249,21 @@ run_simulation <- function(
       fits <- fit_models(dat)
 
       all_results[[idx]] <- data.frame(
-        kappa       = kappa,
-        rep         = rep,
-        slope_est   = fits$slope["est"],
-        slope_se    = fits$slope["se"],
-        slope_pval  = fits$slope["pval"],
-        slope_conv  = fits$slope["converged"],
-        cat_est     = fits$cat["est"],
-        cat_se      = fits$cat["se"],
-        cat_pval    = fits$cat["pval"],
-        cat_conv    = fits$cat["converged"],
-        row.names   = NULL
+        kappa        = kappa,
+        rep          = rep,
+        slope_est    = fits$slope["est"],
+        slope_se     = fits$slope["se"],
+        slope_pval   = fits$slope["pval"],
+        slope_conv   = fits$slope["converged"],
+        slope_c_est  = fits$slope_c["est"],
+        slope_c_se   = fits$slope_c["se"],
+        slope_c_pval = fits$slope_c["pval"],
+        slope_c_conv = fits$slope_c["converged"],
+        cat_est      = fits$cat["est"],
+        cat_se       = fits$cat["se"],
+        cat_pval     = fits$cat["pval"],
+        cat_conv     = fits$cat["converged"],
+        row.names    = NULL
       )
     }
   }
@@ -245,6 +305,30 @@ summarize_results <- function(res, true_delta = -0.45) {
       ),
       mcse_slope_coverage = sqrt(
         slope_coverage * (1 - slope_coverage) / slope_n_conv
+      ),
+
+      slope_c_n_conv = sum(!is.na(slope_c_est)),
+      slope_c_conv = slope_c_n_conv / n_reps,
+      mcse_slope_c_conv = sqrt(
+        slope_c_conv * (1 - slope_c_conv) / n_reps
+      ),
+      slope_c_bias = mean(slope_c_est, na.rm = TRUE) - true_delta,
+      mcse_slope_c_bias = stats::sd(slope_c_est, na.rm = TRUE) /
+        sqrt(slope_c_n_conv),
+      slope_c_emp_se = stats::sd(slope_c_est, na.rm = TRUE),
+      mcse_slope_c_emp_se = slope_c_emp_se /
+        sqrt(2 * (slope_c_n_conv - 1)),
+      slope_c_mean_se = mean(slope_c_se, na.rm = TRUE),
+      slope_c_power = mean(slope_c_pval < 0.05, na.rm = TRUE),
+      mcse_slope_c_power = sqrt(
+        slope_c_power * (1 - slope_c_power) / slope_c_n_conv
+      ),
+      slope_c_coverage = mean(
+        abs(slope_c_est - true_delta) < 1.96 * slope_c_se,
+        na.rm = TRUE
+      ),
+      mcse_slope_c_coverage = sqrt(
+        slope_c_coverage * (1 - slope_c_coverage) / slope_c_n_conv
       ),
 
       cat_n_conv = sum(!is.na(cat_est)),

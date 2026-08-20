@@ -9,6 +9,24 @@
 % verification found no distinct 2018 Ard/Edland paper; the entry has
 % been corrected to the one confirmed Ard and Edland paper, originally
 % mis-dated/mis-cited here, and renamed ard2011 accordingly.
+%
+% Correction (2026-08-20, pub_review remediation): web verification
+% against the publisher record (see pub_review_whitepaper_2026-08-16.md
+% major issue 8a) found four further problems, fixed below:
+%   - chen2018simulation had a fabricated co-author ("Bhatt, Dhairya")
+%     not in the published author list, and wrong page numbers.
+%   - wang2022proportional had a completely fabricated author list
+%     (wrong given name for Wang and four other invented co-authors).
+%   - novic2024nonlinear was fabricated in its entirety: the real
+%     PMID 38727205 article with this title is by Wang et al.,
+%     Statistics in Medicine 2024, not "Novic et al.", Pharmaceutical
+%     Statistics.
+%   - donohue2011power and liang2000longitudinal had correct content
+%     (author lists verified against the published record) but were
+%     keyed and captioned under the wrong year/topic; both are
+%     renamed here to match their actual, verified content, and the
+%     genuinely missing 2000 Liang-Zeger cLDA paper is added as
+%     liang2000sankhya.
 
 % --- Core / Foundational Papers ---
 
@@ -17,12 +35,12 @@
              mixed-model repeated measure to assess cognitive
              data in clinical trials of {Alzheimer's} disease},
   author  = {Chen, Yun-Fei and Ni, Xiao and Fleisher, Adam S
-             and Zhou, Wei and Aisen, Paul and Bhatt, Dhairya
-             and others},
+             and Zhou, Wei and Aisen, Paul and Mohs, Richard},
   journal = {Alzheimer's \& Dementia: Translational Research
              \& Clinical Interventions},
   volume  = {4},
-  pages   = {143--153},
+  number  = {1},
+  pages   = {46--53},
   year    = {2018},
   doi     = {10.1016/j.trci.2017.12.002}
 }
@@ -58,9 +76,11 @@
   title   = {Proportional constrained longitudinal data
              analysis models for clinical trials in sporadic
              {Alzheimer's} disease},
-  author  = {Wang, Jianing and Logovinsky, Veronika and
-             Bhatt, Dhairya L and Tian, Yongqiang and
-             Bhore, Radhika and Sperling, Reisa A},
+  author  = {Wang, Guoqiao and Liu, Lei and Li, Yan and
+             Aschenbrenner, Andrew J and Bateman, Randall J and
+             Delmar, Paul and Schneider, Lon S and
+             Kennedy, Richard E and Cutter, Gary R and
+             Xiong, Chengjie},
   journal = {Alzheimer's \& Dementia: Translational Research
              \& Clinical Interventions},
   volume  = {8},
@@ -70,7 +90,7 @@
   doi     = {10.1002/trc2.12286}
 }
 
-@article{donohue2011power,
+@article{donohue2014pacc,
   title   = {The preclinical {Alzheimer} cognitive composite:
              measuring amyloid-related decline},
   author  = {Donohue, Michael C and Sperling, Reisa A and
@@ -111,17 +131,20 @@
   doi     = {10.1177/1740774515594089}
 }
 
-@article{novic2024nonlinear,
+@article{wang2024nonlinear,
   title   = {Novel non-linear models for clinical trial
              analysis with longitudinal data: a tutorial
              using {SAS} for both frequentist and {Bayesian}
              methods},
-  author  = {Novic, Alan and Engel, Bodo and Scheltens,
-             Philip and Barkhof, Frederik and Berkhof,
-             Johannes},
-  journal = {Pharmaceutical Statistics},
+  author  = {Wang, Guoqiao and Wang, Wei and Mangal, Bhavna and
+             Liao, Yan and Schneider, Lon S and Li, Yan and
+             Xiong, Chengjie and McDade, Eric and
+             Kennedy, Richard and Bateman, Randall J},
+  journal = {Statistics in Medicine},
+  volume  = {43},
+  number  = {15},
+  pages   = {2987--3004},
   year    = {2024},
-  doi     = {10.1002/pst.2394},
   note    = {PMID: 38727205}
 }
 
@@ -237,7 +260,7 @@
 
 % --- Methodological and Review References ---
 
-@article{liang2000longitudinal,
+@article{liang1986longitudinal,
   title   = {Longitudinal data analysis using generalized
              linear models},
   author  = {Liang, Kung-Yee and Zeger, Scott L},
@@ -247,6 +270,18 @@
   pages   = {13--22},
   year    = {1986},
   doi     = {10.1093/biomet/73.1.13}
+}
+
+@article{liang2000sankhya,
+  title   = {Longitudinal data analysis of continuous and
+             discrete responses for pre-post designs},
+  author  = {Liang, Kung-Yee and Zeger, Scott L},
+  journal = {Sankhy\={a}: The Indian Journal of Statistics,
+             Series B},
+  volume  = {62},
+  number  = {1},
+  pages   = {134--148},
+  year    = {2000}
 }
 
 @misc{fda2018guidance,
