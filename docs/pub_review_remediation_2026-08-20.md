@@ -205,3 +205,115 @@ relative to the `mmrmrobust` package root unless noted.
   fit ~7000 models at render time; this substantially reduces
   the render-time risk flagged in minor issue 5, beyond what the
   whitepaper's remediation text anticipated.
+
+## 4. Follow-up pass: completion of deferred items 1 and 2
+*2026-08-20 18:41 PDT*
+
+A subsequent session (working from this log plus
+`git status`/`git diff`) had already made most of the code and
+prose changes for major issue 2's full-scale integration and
+major issue 3's null-scenario rerun before its context ended;
+that work was auto-committed as
+`e316ee7 Auto-backup: 2026-08-20 18:02:20` before this pass
+started. This pass verified what was actually on disk (rather
+than assuming the prior session's log entries described its
+final state), ran the one script that had not yet been executed,
+fixed a render-breaking bug the prior session's log did not
+mention, and confirmed the full pipeline (tests + render) end to
+end.
+
+- **Major issue 2, full-scale integration** [verified, now
+  DONE]. `analysis/scripts/run_sim_08.R` and
+  `analysis/scripts/sim_mmrm_linearity.R` (as committed in
+  `e316ee7`) already summarized the constrained estimator
+  (`slope_c_*` columns) at full scale ($n_{\mathrm{rep}} = 1000$
+  x 7 $\kappa$ values x 3 models = 7,000 model fits, confirmed by
+  `dim(sim_08.rds$res)` = 7000 x 14 and
+  `sim_08.rds$summary$n_reps` = 1000 at every $\kappa$).
+  `report.Rmd`'s Table 1, Table 2, Figure 2, and the new
+  "Estimator definition check" subsection were already wired to
+  read these columns. Nothing further was needed for this item
+  beyond the render fix below; it is complete, not partial.
+- **Major issue 3, null/type-I-error scenario** [verified, now
+  DONE]. `analysis/scripts/run_sim_08_null.R` existed on disk
+  (committed in `e316ee7`) and `report.Rmd` already had a "Type I
+  error under the null" section wired to load
+  `analysis/data/derived_data/sim_08_null.rds`, but that file did
+  not exist yet (the script had been written but never executed).
+  Ran it: `Rscript analysis/scripts/run_sim_08_null.R`
+  ($n_{\mathrm{rep}} = 1000$, $\delta = 0$, `RNGkind("L'Ecuyer-CMRG")`,
+  `set.seed(20260320)`, distinct from the main design's seed
+  20260310; ~83 s wall clock on 7 cores). Empirical type I error
+  at the nominal 0.05 level was 0.059 (unconstrained random
+  slopes, MCSE 0.007), 0.070 (constrained random slopes, MCSE
+  0.008), and 0.054 (categorical-time MMRM, MCSE 0.007); all
+  three models converged on 100% of the 1,000 null replicates.
+  These figures now appear in `report.tex`/`report.pdf` ("Type I
+  error under the null" and the associated table). No claim of
+  formal type I error control (e.g., via a binomial test against
+  0.05) was added beyond reporting the point estimate and MCSE,
+  consistent with what the report's prose says.
+- **Render-breaking bug found and fixed** [verified]. The first
+  `bash tools/render.sh analysis/report/report.Rmd` attempt
+  failed in the `estimator-check-08` chunk with `Error in `if
+  (...) NULL`: ! argument is of length zero`. Root cause: knitr's
+  `cache = TRUE` / `cache.path = "cache/"` global option (set in
+  the `setup` chunk) had stale cached results in
+  `analysis/report/cache/` for the `headline-08` chunk, computed
+  before the `slope_c_*` columns existed in
+  `sim_08.rds$summary`. Because knitr cache invalidation keys off
+  chunk source text and options, not upstream data-file content,
+  the unchanged `headline-08` chunk code reused its stale cached
+  `linear_row`/`worst_slope_bias` objects (lacking `slope_c_bias`,
+  `slope_c_power`, etc.), so `linear_row$slope_c_power` evaluated
+  to `numeric(0)` three chunks later in `estimator-check-08`.
+  Fixed by `rm -rf analysis/report/cache` and re-rendering from
+  scratch; the render then completed cleanly (23/23 chunks,
+  `report.pdf` produced, 17 pages, staged to
+  `share/report-2026-08-20-1840-e316ee7-wip.pdf`). This is a
+  latent hazard for any future edit to `sim_08.rds` or
+  `sim_08_null.rds` in this repo: an incremental (non-`rm -rf
+  cache`) render after regenerating either `.rds` file can
+  silently serve stale numbers instead of erroring, because
+  `headline-08` and the other summary chunks are not declared
+  with `dependson = "load-sim-08"`. Not fixed in this pass (would
+  require either adding `dependson` to every downstream summary
+  chunk or disabling caching for those chunks); recommend
+  clearing `analysis/report/cache/` before every render that
+  follows a simulation rerun until this is addressed.
+- **Tinytest suite** [verified]. `Rscript -e
+  'pkgload::load_all("."); tinytest::run_test_dir("inst/tinytest")'`
+  reports 21/21 passing (4.6 s), not the 17/17 recorded in this
+  log's Section 1; the prior session's `e316ee7` commit added 4
+  more assertions to `inst/tinytest/test_basic.R` beyond what
+  Section 1 above described (diff shows 34 insertions to that
+  file total). All pass; no failures at any point in this pass.
+- **Design expansion (major issue 7 / checklist (b)7)**
+  [confirmed still deferred, unchanged]. Per the original
+  triage instruction (prioritize items 1 and 2), this item was
+  not attempted. `report.Rmd`'s Limitations and "Future work"
+  sections still describe it prospectively (a second sample size
+  near 900/arm matching CLARITY-AD, MAR dropout, $n_{\mathrm{rep}}
+  \geq 2{,}100$) rather than reporting it as done. No code toward
+  a dropout mechanism was written. This remains a multi-hour
+  rerun (larger per-arm N increases per-fit cost, and dropout
+  requires extending `simulate_one_trial()`), consistent with the
+  original log's estimate.
+
+### Final status of the three items in scope for this pass
+
+1. Full-scale Table 1 integration of the constrained-slope
+   estimator: **done** (was already complete on disk at the
+   start of this pass; verified, not re-derived).
+2. Null/type-I-error scenario rerun, integrated into the
+   manuscript: **done** (script existed but had not been run;
+   this pass ran it and confirmed the resulting numbers render
+   correctly).
+3. Design expansion (900/arm, dropout, $n_{\mathrm{rep}} \geq
+   2{,}100$): **still deferred**, as instructed when triaging
+   against items 1 and 2; disclosed as prospective future work in
+   the manuscript, not attempted.
+
+Tests: 21/21 passing. Render: `bash tools/render.sh
+analysis/report/report.Rmd` succeeds end to end after clearing
+the stale cache, producing a 17-page `report.pdf`.
