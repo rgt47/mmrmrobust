@@ -273,6 +273,104 @@ run_simulation <- function(
   out
 }
 
+run_simulation_parallel <- function(
+    n_rep     = 1000,
+    kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
+    mc.cores  = max(1, parallel::detectCores() - 1),
+    ...
+) {
+  # Parallel driver for the same data-generating/fitting logic as
+  # run_simulation(), used only because a full n_rep = 1000 x 7-kappa
+  # x 3-model design (~1.7 s/replicate on this hardware) is
+  # single-core-infeasible within a working session (~3+ hours
+  # serial). Reproducibility follows the parallel extension of
+  # Morris, White, and Crowther (2019) sec. 4.1 recommended by
+  # L'Ecuyer et al. (2002): the caller sets RNGkind("L'Ecuyer-CMRG")
+  # and a single seed once before calling this function; each
+  # parallel job below is assigned its own reproducible substream via
+  # parallel::nextRNGStream(), so re-running this function against
+  # the same seed and mc.cores reproduces the same result, but the
+  # per-job partition (and hence exact RNG consumption order) differs
+  # from the serial run_simulation(), so results are not bit-identical
+  # to a serial run at the same seed -- only equal in distribution.
+  if (identical(RNGkind()[1], "L'Ecuyer-CMRG") == FALSE) {
+    warning(
+      "run_simulation_parallel() expects RNGkind() == ",
+      "\"L'Ecuyer-CMRG\" for reproducible parallel substreams; ",
+      "got \"", RNGkind()[1], "\"."
+    )
+  }
+
+  n_chunks_per_kappa <- max(1, ceiling(mc.cores / length(kappa_vec)))
+  chunk_size <- ceiling(n_rep / n_chunks_per_kappa)
+
+  jobs <- list()
+  for (kappa in kappa_vec) {
+    starts <- seq(1, n_rep, by = chunk_size)
+    for (st in starts) {
+      en <- min(st + chunk_size - 1, n_rep)
+      jobs[[length(jobs) + 1]] <- list(
+        kappa = kappa, rep_start = st, rep_end = en
+      )
+    }
+  }
+
+  s <- .Random.seed
+  streams <- vector("list", length(jobs))
+  for (i in seq_along(jobs)) {
+    streams[[i]] <- s
+    s <- parallel::nextRNGStream(s)
+  }
+
+  res_list <- parallel::mclapply(
+    seq_along(jobs),
+    function(i) {
+      assign(".Random.seed", streams[[i]], envir = .GlobalEnv)
+      job <- jobs[[i]]
+      n_j <- job$rep_end - job$rep_start + 1
+      out <- vector("list", n_j)
+      for (r in seq_len(n_j)) {
+        rep_id <- job$rep_start + r - 1
+        dat <- simulate_one_trial(kappa = job$kappa, ...)
+        fits <- fit_models(dat)
+        out[[r]] <- data.frame(
+          kappa        = job$kappa,
+          rep          = rep_id,
+          slope_est    = fits$slope["est"],
+          slope_se     = fits$slope["se"],
+          slope_pval   = fits$slope["pval"],
+          slope_conv   = fits$slope["converged"],
+          slope_c_est  = fits$slope_c["est"],
+          slope_c_se   = fits$slope_c["se"],
+          slope_c_pval = fits$slope_c["pval"],
+          slope_c_conv = fits$slope_c["converged"],
+          cat_est      = fits$cat["est"],
+          cat_se       = fits$cat["se"],
+          cat_pval     = fits$cat["pval"],
+          cat_conv     = fits$cat["converged"],
+          row.names    = NULL
+        )
+      }
+      do.call(rbind, out)
+    },
+    mc.cores = mc.cores,
+    mc.preschedule = FALSE
+  )
+
+  bad <- vapply(res_list, function(x) inherits(x, "try-error"), logical(1))
+  if (any(bad)) {
+    stop(
+      "run_simulation_parallel(): ", sum(bad),
+      " of ", length(res_list), " parallel jobs failed"
+    )
+  }
+
+  out <- do.call(rbind, res_list)
+  out <- out[order(out$kappa, out$rep), ]
+  rownames(out) <- NULL
+  out
+}
+
 summarize_results <- function(res, true_delta = -0.45) {
   # Morris et al. (2019) Table 6: report Monte Carlo SEs alongside
   # every performance estimate. `n_conv` (per method) is the number

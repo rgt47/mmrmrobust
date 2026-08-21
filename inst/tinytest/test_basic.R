@@ -156,3 +156,37 @@ expect_true(
   ) %in% names(summ)),
   info = "summarize_results reports MCSEs per Morris et al. (2019) Table 6"
 )
+
+# --- run_simulation_parallel(): parallel driver used for the -------
+# --- full-scale reruns (analysis/scripts/run_sim_08.R, ------------
+# --- run_sim_08_null.R) --------------------------------------------
+
+RNGkind("L'Ecuyer-CMRG")
+set.seed(20260819)
+par_res <- run_simulation_parallel(
+  n_rep = 2, kappa_vec = c(1.0, 3.0), mc.cores = 2,
+  n_per_arm = 30, delta = -0.45
+)
+
+expect_equal(
+  nrow(par_res), 4,
+  info = "run_simulation_parallel returns one row per (kappa, rep) combination"
+)
+expect_equal(
+  sort(unique(par_res$kappa)), c(1, 3),
+  info = "run_simulation_parallel covers every requested kappa value"
+)
+expect_true(
+  all(c(
+    "slope_est", "slope_c_est", "cat_est",
+    "slope_se", "slope_c_se", "cat_se"
+  ) %in% names(par_res)),
+  info = paste(
+    "run_simulation_parallel returns the same columns as the",
+    "serial run_simulation()"
+  )
+)
+expect_true(
+  all(!is.na(par_res$slope_c_est)),
+  info = "run_simulation_parallel's constrained-slope estimates converge"
+)

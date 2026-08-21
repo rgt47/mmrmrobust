@@ -12,10 +12,13 @@
 #
 # Wall-clock time: the n_rep = 1000, 7-kappa design below fits
 # roughly 21,000 mixed models (unconstrained slope, constrained
-# slope, categorical MMRM) and takes several minutes on a laptop.
-# This is too long to run inside an interactive remediation pass;
-# it must be run by the user to refresh sim_08.rds after any change
-# to the data-generating model or fit_models().
+# slope, categorical MMRM). At ~1.7 s/replicate on a single core
+# that is ~3.3 hours serial, so this script uses
+# run_simulation_parallel() (parallel::mclapply, one reproducible
+# L'Ecuyer-CMRG substream per job) to bring wall-clock down to
+# roughly (3.3 hours / mc.cores). It must be re-run by the user to
+# refresh sim_08.rds after any change to the data-generating model
+# or fit_models().
 
 here_root <- function() {
   d <- getwd()
@@ -41,9 +44,12 @@ RNGkind("L'Ecuyer-CMRG")
 set.seed(20260310)
 
 n_sim_reps <- 1000
-sim_raw <- run_simulation(
+mc_cores <- max(1, parallel::detectCores() - 1)
+message("Running full-scale simulation on ", mc_cores, " cores...")
+sim_raw <- run_simulation_parallel(
   n_rep     = n_sim_reps,
   kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
+  mc.cores  = mc_cores,
   n_per_arm = 200,
   delta     = -0.45
 )

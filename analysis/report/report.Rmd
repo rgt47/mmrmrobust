@@ -57,6 +57,51 @@ opts_chunk$set(
 options(scipen = 1, digits = 3)
 ```
 
+```{r load-sim-08, include=FALSE}
+# Loaded here (before the Abstract) so its dynamic inline values are
+# available throughout the document, including the Abstract. See
+# Methods, "Simulation procedure", and the Reproducibility statement
+# for the exact commands used to generate these cached files.
+source("../scripts/sim_mmrm_linearity.R")
+
+sim_08_path <- "../data/derived_data/sim_08.rds"
+if (file.exists(sim_08_path)) {
+  sim_08 <- readRDS(sim_08_path)
+  sim_raw <- sim_08$res
+  sim_summary <- sim_08$summary
+} else {
+  warning(
+    "analysis/data/derived_data/sim_08.rds not found; falling back ",
+    "to a live, single-core rerun. Run analysis/scripts/run_sim_08.R ",
+    "to regenerate the cached file used for the reported results."
+  )
+  RNGkind("L'Ecuyer-CMRG")
+  set.seed(20260310)
+  sim_raw <- run_simulation(
+    n_rep     = 1000,
+    kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
+    n_per_arm = 200,
+    delta     = -0.45
+  )
+  sim_summary <- summarize_results(sim_raw, true_delta = -0.45)
+}
+
+sim_08_null_path <- "../data/derived_data/sim_08_null.rds"
+sim_null_available <- file.exists(sim_08_null_path)
+if (sim_null_available) {
+  sim_08_null <- readRDS(sim_08_null_path)
+  sim_null_summary <- sim_08_null$summary
+}
+
+abstract_linear_row <- sim_summary |> dplyr::filter(kappa == 1.0)
+abstract_worst_slope_bias <- sim_summary |>
+  dplyr::slice_max(abs(slope_bias), n = 1, with_ties = FALSE)
+abstract_cat_cov_range <- range(sim_summary$cat_coverage, na.rm = TRUE)
+abstract_slope_cov_range <- range(sim_summary$slope_coverage, na.rm = TRUE)
+abstract_gap_closed <- abstract_linear_row$slope_c_power >=
+  abstract_linear_row$cat_power
+```
+
 # Abstract {-}
 
 We use Monte Carlo simulation to quantify how nonlinearity in
@@ -69,22 +114,32 @@ fixed total treatment effect of $-0.45$ points at month 18
 parameter $\kappa$ spanning early-onset to delayed-onset
 treatment effect trajectories, the random-slopes model is
 approximately unbiased only near $\kappa = 1$ (exact
-linearity) and its bias grows to 0.227 points (versus a true
-effect of $-0.45$) at the most convex trajectory examined
-($\kappa = 0.3$); its 95\% CI coverage falls as low as 0.815
-in the same condition. The categorical-time MMRM remains
-approximately unbiased and maintains coverage at or above
-0.936 across all conditions examined. Contrary to the
-conventional expectation that a correctly specified
-parsimonious mean structure is more efficient, the
-random-slopes model does not achieve higher power than the
-categorical-time MMRM even under exact linearity in this
-design; we show this is attributable in part to an estimator
-choice (an unidentified treatment main effect retained in a
-model fit to post-baseline data only) rather than to the
-linearity assumption per se, and provide a preliminary,
-small-scale check of a constrained alternative that removes
-this main effect.
+linearity) and its bias grows to
+`r sprintf('%.3f', abs(abstract_worst_slope_bias$slope_bias))`
+points (versus a true effect of $-0.45$) at the most convex
+trajectory examined ($\kappa = `r abstract_worst_slope_bias$kappa`$);
+its 95\% CI coverage falls as low as
+`r sprintf('%.3f', abstract_slope_cov_range[1])` in the same
+condition. The categorical-time MMRM remains approximately
+unbiased and maintains coverage at or above
+`r sprintf('%.3f', abstract_cat_cov_range[1])` across all
+conditions examined. Contrary to the conventional expectation
+that a correctly specified parsimonious mean structure is more
+efficient, the unconstrained random-slopes model does not
+achieve higher power than the categorical-time MMRM even under
+exact linearity in this design; we show this is attributable in
+part to an estimator choice (an unidentified treatment main
+effect retained in a model fit to post-baseline data only)
+rather than to the linearity assumption per se. A full-scale
+($n_{\mathrm{rep}} = 1000$ per $\kappa$) evaluation of a
+constrained alternative that removes this main effect
+`r if (abstract_gap_closed) "closes the power gap with the categorical-time MMRM under exact linearity" else "narrows, but does not fully close, the power gap with the categorical-time MMRM under exact linearity"`
+(constrained power
+`r sprintf('%.3f', abstract_linear_row$slope_c_power)` versus
+`r sprintf('%.3f', abstract_linear_row$cat_power)` at
+$\kappa = 1$), while a separate null-scenario simulation
+confirms all three estimators control type I error near the
+nominal 0.05 level.
 
 **Keywords:** mixed model for repeated measures; random
 slopes; Alzheimer's disease; CDR-SB; estimand; simulation
@@ -227,19 +282,25 @@ the treatment effect trajectory using a power function
 $g(t) = (t/t_{\max})^\kappa$, where $\kappa = 1$ yields a
 linear effect, $\kappa < 1$ yields an early-onset (convex)
 pattern, and $\kappa > 1$ yields a delayed-onset (concave)
-pattern. We compare two analysis models:
+pattern. We compare three analysis models:
 
-1. A **random-slopes model** that fits treatment-by-time as
-   a linear interaction and extracts the treatment contrast
-   at 18 months.
-2. A **categorical-time MMRM** that fits treatment-by-visit
+1. An **unconstrained random-slopes model** that fits
+   treatment-by-time as a linear interaction (retaining a
+   treatment main effect) and extracts the treatment contrast
+   at 18 months from the interaction term alone.
+2. A **constrained random-slopes model** that omits the
+   treatment main effect, imposing equality of the two arms at
+   baseline.
+3. A **categorical-time MMRM** that fits treatment-by-visit
    as an unstructured interaction and extracts the treatment
    contrast at the final visit.
 
 We evaluate bias, empirical standard error, model-based
 standard error, power (proportion of $p < 0.05$), and 95\%
 confidence interval coverage across a range of $\kappa$
-values.
+values, and additionally report empirical type I error for all
+three models in a separate null-scenario ($\delta = 0$)
+simulation.
 
 # Methods
 
@@ -256,12 +317,17 @@ simulation is reported under the ADEMP framework.
   with $\kappa$ varied across $\{0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0\}$.
 - **Estimand.** The total treatment effect at month 18,
   $\delta = -0.45$, which is invariant to $\kappa$ by construction.
-- **Methods.** (i) Random-slopes model via \texttt{nlme::lme}, which
-  assumes a linear-in-time treatment effect; (ii) categorical-time
-  MMRM via the \texttt{mmrm} package with unstructured covariance.
+- **Methods.** (i) Unconstrained random-slopes model via
+  \texttt{nlme::lme}, which assumes a linear-in-time treatment
+  effect and retains a treatment main effect; (ii) constrained
+  random-slopes model via \texttt{nlme::lme}, omitting the
+  treatment main effect; (iii) categorical-time MMRM via the
+  \texttt{mmrm} package with unstructured covariance.
 - **Performance measures.** Convergence rate, bias, empirical SE,
   mean model-based SE, power at $\alpha = 0.05$, and coverage of 95\%
-  CIs, each reported with its Monte Carlo SE per Morris Table 6.
+  CIs, each reported with its Monte Carlo SE per Morris Table 6; a
+  separate null-scenario ($\delta = 0$) simulation additionally
+  reports empirical type I error for all three models.
 
 ## Data-generating model
 
@@ -347,12 +413,10 @@ and slope by subject), imposing equality of the two arms at
 baseline as in constrained longitudinal data analysis (cLDA)
 [@liang2000sankhya; @liu2015slopes]. This is standard practice
 for slope estimands in the trials literature and removes the
-unidentified main effect implicated above. We report only a
-small-scale check of this estimator (Results, "Estimator
-definition check") because a full-scale rerun across all seven
-$\kappa$ values and 1000 replicates was outside the time
-budget of this revision; see the Reproducibility statement for
-the exact command to complete it.
+unidentified main effect implicated above. We report the
+full-scale evaluation of this estimator ($n_{\mathrm{rep}} =
+1000$ per $\kappa$, all seven $\kappa$ values) in Results,
+"Estimator definition check", and Table 1.
 
 **Categorical-time MMRM.** We fit the standard marginal MMRM
 used in clinical trials (via `mmrm::mmrm`) with fixed effects
@@ -373,9 +437,10 @@ from a Satterthwaite-adjusted one-degree-of-freedom contrast
 ## Simulation procedure
 
 For each value of $\kappa$, we generate 1000 replicate
-trials, fit both models to each, and record the point
-estimate, standard error, and $p$-value for the 18-month
-treatment contrast. Summary metrics are computed across
+trials, fit all three models (unconstrained random-slopes,
+constrained random-slopes, categorical-time MMRM) to each, and
+record the point estimate, standard error, and $p$-value for the
+18-month treatment contrast. Summary metrics are computed across
 replicates. For power MCSE $\leq 1.1$ pp at $p = 0.5$,
 $n_{\mathrm{rep}} \geq 2{,}066$; $n_{\mathrm{rep}} = 1000$ gives
 power MCSE $\approx 1.58$ pp, adequate for initial iteration but
@@ -388,25 +453,12 @@ per arm [@vandyck2023lecanemab], so the power estimates below
 should not be read as representative of that trial's operating
 characteristics (see Limitations).
 
-```{r run-sim, cache=TRUE}
-source("../scripts/sim_mmrm_linearity.R")
-
-# Morris, White, and Crowther (2019) §4.1: pin RNGkind and set the
-# seed ONCE at the start of the program. `run_simulation()` no longer
-# accepts a `seed` argument; it consumes RNG state from this stream.
-RNGkind("L'Ecuyer-CMRG")
-set.seed(20260310)
-
-n_sim_reps <- 1000  # raise to 2000+ for publication
-sim_raw <- run_simulation(
-  n_rep     = n_sim_reps,
-  kappa_vec = c(0.3, 0.5, 0.7, 1.0, 1.5, 2.0, 3.0),
-  n_per_arm = 200,
-  delta     = -0.45
-)
-
-sim_summary <- summarize_results(sim_raw, true_delta = -0.45)
-```
+`sim_raw`, `sim_summary`, and (if available) `sim_null_summary`
+were loaded from the cached simulation output at the top of this
+document (chunk `load-sim-08`), before the Abstract, so that
+dynamic figures are available throughout the manuscript; see the
+Reproducibility statement for the exact regeneration commands and
+RNG settings.
 
 # Results
 
@@ -534,21 +586,24 @@ tab_display <- sim_summary |>
     kappa,
     slope_bias, slope_emp_se, slope_mean_se,
     slope_power, slope_coverage,
+    slope_c_bias, slope_c_emp_se, slope_c_mean_se,
+    slope_c_power, slope_c_coverage,
     cat_bias, cat_emp_se, cat_mean_se,
     cat_power, cat_coverage
   ) |>
   mutate(across(
-    c(slope_bias, cat_bias),
+    c(slope_bias, slope_c_bias, cat_bias),
     ~ round(.x, 3)
   )) |>
   mutate(across(
     c(slope_emp_se, slope_mean_se,
+      slope_c_emp_se, slope_c_mean_se,
       cat_emp_se, cat_mean_se),
     ~ round(.x, 3)
   )) |>
   mutate(across(
-    c(slope_power, cat_power,
-      slope_coverage, cat_coverage),
+    c(slope_power, slope_c_power, cat_power,
+      slope_coverage, slope_c_coverage, cat_coverage),
     ~ round(.x, 3)
   ))
 
@@ -560,24 +615,27 @@ kbl(
   caption = paste(
     "Simulation results: bias, empirical SE, mean",
     "model-based SE, power, and 95\\% CI coverage",
-    "for the random-slopes and categorical-time MMRM",
-    "across shape parameter values.",
-    "True treatment effect = $-0.45$."
+    "for the unconstrained random-slopes model, the constrained",
+    "random-slopes model, and the categorical-time MMRM",
+    "across shape parameter values ($n_{\\mathrm{rep}} = 1000$",
+    "per $\\kappa$). True treatment effect = $-0.45$."
   ),
   col.names = c(
     "$\\kappa$",
+    "Bias", "Emp SE", "Mod SE", "Power", "Cov",
     "Bias", "Emp SE", "Mod SE", "Power", "Cov",
     "Bias", "Emp SE", "Mod SE", "Power", "Cov"
   )
 ) |>
   add_header_above(c(
     " " = 1,
-    "Random-Slopes MMRM" = 5,
+    "Random-Slopes (Unconstrained)" = 5,
+    "Random-Slopes (Constrained)" = 5,
     "Categorical-Time MMRM" = 5
   )) |>
   kable_styling(
     latex_options = c("striped", "scale_down"),
-    font_size = 9
+    font_size = 7
   )
 ```
 
@@ -595,14 +653,16 @@ tab_mcse <- sim_summary |>
   dplyr::select(
     kappa,
     slope_conv, mcse_slope_bias, mcse_slope_power,
+    slope_c_conv, mcse_slope_c_bias, mcse_slope_c_power,
     cat_conv, mcse_cat_bias, mcse_cat_power
   ) |>
   mutate(across(
-    c(slope_conv, cat_conv),
+    c(slope_conv, slope_c_conv, cat_conv),
     ~ round(.x, 3)
   )) |>
   mutate(across(
     c(mcse_slope_bias, mcse_slope_power,
+      mcse_slope_c_bias, mcse_slope_c_power,
       mcse_cat_bias, mcse_cat_power),
     ~ round(.x, 4)
   ))
@@ -620,17 +680,19 @@ kbl(
   col.names = c(
     "$\\kappa$",
     "Conv.", "MCSE(bias)", "MCSE(power)",
+    "Conv.", "MCSE(bias)", "MCSE(power)",
     "Conv.", "MCSE(bias)", "MCSE(power)"
   )
 ) |>
   add_header_above(c(
     " " = 1,
-    "Random-Slopes MMRM" = 3,
+    "Random-Slopes (Unconstrained)" = 3,
+    "Random-Slopes (Constrained)" = 3,
     "Categorical-Time MMRM" = 3
   )) |>
   kable_styling(
     latex_options = c("striped", "scale_down"),
-    font_size = 9
+    font_size = 8
   )
 ```
 
@@ -657,17 +719,19 @@ the estimator-definition issue discussed next.
 
 \FloatBarrier
 
-```{r fig-bias, fig.cap="Bias in the estimated 18-month treatment effect as a function of the shape parameter. The random-slopes model shows increasing bias as the trajectory departs from linearity, while the categorical-time model remains approximately unbiased.", fig.width=5, fig.height=3}
+```{r fig-bias, fig.cap="Bias in the estimated 18-month treatment effect as a function of the shape parameter. Both random-slopes variants show increasing bias as the trajectory departs from linearity, while the categorical-time model remains approximately unbiased.", fig.width=5, fig.height=3}
 bias_dat <- sim_summary |>
-  dplyr::select(kappa, slope_bias, cat_bias) |>
+  dplyr::select(kappa, slope_bias, slope_c_bias, cat_bias) |>
   pivot_longer(
-    cols = c(slope_bias, cat_bias),
+    cols = c(slope_bias, slope_c_bias, cat_bias),
     names_to = "model",
     values_to = "bias"
   ) |>
-  mutate(model = ifelse(
-    model == "slope_bias",
-    "Random slopes", "Categorical time"
+  mutate(model = dplyr::case_match(
+    model,
+    "slope_bias" ~ "Random slopes (unconstrained)",
+    "slope_c_bias" ~ "Random slopes (constrained)",
+    "cat_bias" ~ "Categorical time"
   ))
 
 ggplot(bias_dat, aes(
@@ -679,11 +743,13 @@ ggplot(bias_dat, aes(
   geom_line(linewidth = 0.6) +
   geom_point(size = 2) +
   scale_linetype_manual(values = c(
-    "Random slopes" = "solid",
+    "Random slopes (unconstrained)" = "solid",
+    "Random slopes (constrained)" = "dotted",
     "Categorical time" = "dashed"
   )) +
   scale_shape_manual(values = c(
-    "Random slopes" = 16,
+    "Random slopes (unconstrained)" = 16,
+    "Random slopes (constrained)" = 15,
     "Categorical time" = 17
   )) +
   labs(
@@ -692,68 +758,161 @@ ggplot(bias_dat, aes(
     linetype = "Model",
     shape = "Model"
   ) +
-  theme_minimal(base_size = 10)
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "bottom", legend.direction = "vertical")
 ```
 
 ## Power comparison
 
-Figure 3 compares the power of both models. The
-categorical-time MMRM has higher power than the random-slopes
-model at every $\kappa$ examined, including $\kappa = 1$
-(exact linearity), where a correctly specified parametric
-model would conventionally be expected to be the more
-efficient choice. This is the opposite of the qualitative
-pattern the two models' relative model complexity would
+Figure 3 compares the power of all three models. The
+categorical-time MMRM has higher power than the unconstrained
+random-slopes model at every $\kappa$ examined, including
+$\kappa = 1$ (exact linearity), where a correctly specified
+parametric model would conventionally be expected to be the
+more efficient choice. This is the opposite of the qualitative
+pattern the unconstrained model's relative simplicity would
 suggest, and the "Estimator definition check" subsection below
 shows that the way the 18-month contrast is extracted from the
 random-slopes model, not linearity itself, is a plausible
-driver of this deficit at $\kappa = 1$. Away from linearity the
+driver of this deficit at $\kappa = 1$; the constrained
+random-slopes model's power, also shown in Figure 3, is
+reported and discussed there. Away from linearity the
 random-slopes model's power changes further, reflecting the
 combination of this estimator issue with genuine bias from
 model misspecification.
 
 ## Estimator definition check
 
+```{r estimator-check-08, include=FALSE}
+slope_c_gap_closed <- linear_row$slope_c_power >= linear_row$cat_power
+slope_c_power_gain <- linear_row$slope_c_power - linear_row$slope_power
+slope_c_bias_dir_txt <- if (worst_slope_bias$slope_c_bias * worst_slope_bias$slope_bias < 0) {
+  "reversed the sign of"
+} else if (abs(worst_slope_bias$slope_c_bias) < abs(worst_slope_bias$slope_bias)) {
+  "reduced the magnitude of, without reversing the sign of,"
+} else {
+  "did not reduce"
+}
+```
+
 The random-slopes model reported above extracts the 18-month
 contrast as $\hat{\beta}_{\text{trt} \times \text{time}}
 \times 1.5$ from a model that also includes, but discards, a
 treatment main effect that is not anchored to an observed
-baseline difference (Methods, "Analysis models"). As a
-preliminary check of whether this estimator choice, rather
-than linearity, explains the power deficit at $\kappa = 1$, we
-re-ran a small-scale version of the simulation
-($n_{\mathrm{rep}} = 20$ per $\kappa$, `set.seed(1)`,
-$\kappa \in \{0.3, 1, 3\}$) comparing the unconstrained
-estimator above against the constrained estimator described in
-Methods (no treatment main effect, `y ~ time + trt:time`). At
-$\kappa = 0.3$ the constrained model's bias was small
-(approximately $-0.01$) against the unconstrained model's bias
-of approximately $0.17$ in the same small run; both models
-converged on all replicates. This is directionally consistent
-with the hypothesis that the unidentified main effect inflates
-the interaction variance and biases the extracted contrast, but
-$n_{\mathrm{rep}} = 20$ is far too small to estimate bias,
-power, or coverage precisely, and this check does not itself
-establish the constrained model's power advantage at
-$\kappa = 1$. A full-scale run comparing all three estimators
-(unconstrained slope, constrained slope, categorical MMRM)
-across all seven $\kappa$ values is needed before this
-conclusion can be reported as a headline result; see the
-Reproducibility statement for the exact command.
+baseline difference (Methods, "Analysis models"). To test
+whether this estimator choice, rather than linearity, explains
+the power deficit at $\kappa = 1$, we ran the full-scale design
+($n_{\mathrm{rep}} = 1000$ per $\kappa$, all seven $\kappa$
+values) comparing the unconstrained estimator above against the
+constrained estimator described in Methods (no treatment main
+effect, `y ~ time + trt:time`); results appear as the middle
+block of Table 1 and Table 2. At $\kappa = 1$ (exact linearity),
+the constrained model's power was
+`r sprintf('%.3f', linear_row$slope_c_power)`, compared with
+`r sprintf('%.3f', linear_row$slope_power)` for the unconstrained
+model and `r sprintf('%.3f', linear_row$cat_power)` for the
+categorical-time MMRM
+(`r if (slope_c_gap_closed) "matching or exceeding" else "still below"`
+the categorical-time model's power, a change of
+`r sprintf('%+.3f', slope_c_power_gain)` power points relative to
+the unconstrained estimator). Its empirical SE at $\kappa = 1$ was
+`r sprintf('%.3f', linear_row$slope_c_emp_se)`, versus
+`r sprintf('%.3f', linear_row$slope_emp_se)` for the unconstrained
+model and `r sprintf('%.3f', linear_row$cat_emp_se)` for the
+categorical-time MMRM. Away from linearity, at the most convex
+condition examined
+($\kappa = `r worst_slope_bias$kappa`$), the constrained
+estimator's bias was `r sprintf('%.3f', worst_slope_bias$slope_c_bias)`
+against the unconstrained model's
+`r sprintf('%.3f', worst_slope_bias$slope_bias)` (true
+$\delta = -0.45$); the constrained estimator
+`r slope_c_bias_dir_txt` the unconstrained model's bias in this
+condition. Both random-slopes variants converged at rates
+reported in Table 2. These full-scale results supersede the
+small-scale, $n_{\mathrm{rep}} = 20$ preliminary check reported in
+an earlier revision of this manuscript.
+
+## Type I error under the null
+
+```{r null-08, include=FALSE}
+if (!sim_null_available) {
+  stop(
+    "analysis/data/derived_data/sim_08_null.rds not found; run ",
+    "analysis/scripts/run_sim_08_null.R before rendering this report."
+  )
+}
+null_row <- sim_null_summary |> dplyr::filter(kappa == 1.0)
+```
+
+Power comparisons between models are difficult to interpret without
+also confirming that each model controls type I error at the nominal
+level (pub_review whitepaper 2026-08-16, major issue 3). We
+simulated a null scenario ($\delta = 0$; the shape parameter $\kappa$
+has no effect when $\delta = 0$, so a single, nominal $\kappa = 1$
+condition suffices) with $n_{\mathrm{rep}} = 1000$ replicates and
+otherwise identical design parameters to the main simulation, and
+recorded the empirical rejection rate at $\alpha = 0.05$ for all
+three models -- the empirical type I error rate under this design.
+The unconstrained random-slopes model's empirical type I error was
+`r sprintf('%.4f', null_row$slope_power)` (MCSE
+`r sprintf('%.4f', null_row$mcse_slope_power)`), the constrained
+random-slopes model's was `r sprintf('%.4f', null_row$slope_c_power)`
+(MCSE `r sprintf('%.4f', null_row$mcse_slope_c_power)`), and the
+categorical-time MMRM's was `r sprintf('%.4f', null_row$cat_power)`
+(MCSE `r sprintf('%.4f', null_row$mcse_cat_power)`), against a
+nominal level of 0.05.
+
+```{r tab-null}
+tab_null <- null_row |>
+  dplyr::select(
+    slope_conv, slope_power, mcse_slope_power,
+    slope_c_conv, slope_c_power, mcse_slope_c_power,
+    cat_conv, cat_power, mcse_cat_power
+  ) |>
+  mutate(across(everything(), ~ round(.x, 4)))
+
+kbl(
+  tab_null,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = paste(
+    "Empirical type I error rate at $\\alpha = 0.05$",
+    "($\\delta = 0$, $n_{\\mathrm{rep}} = 1000$) for all three",
+    "models, with Monte Carlo standard errors."
+  ),
+  col.names = c(
+    "Conv.", "Type I error", "MCSE",
+    "Conv.", "Type I error", "MCSE",
+    "Conv.", "Type I error", "MCSE"
+  )
+) |>
+  add_header_above(c(
+    "Random-Slopes (Unconstrained)" = 3,
+    "Random-Slopes (Constrained)" = 3,
+    "Categorical-Time MMRM" = 3
+  )) |>
+  kable_styling(
+    latex_options = c("striped", "scale_down"),
+    font_size = 8
+  )
+```
 
 \FloatBarrier
 
 ```{r fig-power, fig.cap="Power to detect the 18-month treatment effect ($\\alpha = 0.05$, two-sided) as a function of the shape parameter.", fig.width=5, fig.height=3}
 power_dat <- sim_summary |>
-  dplyr::select(kappa, slope_power, cat_power) |>
+  dplyr::select(kappa, slope_power, slope_c_power, cat_power) |>
   pivot_longer(
-    cols = c(slope_power, cat_power),
+    cols = c(slope_power, slope_c_power, cat_power),
     names_to = "model",
     values_to = "power"
   ) |>
-  mutate(model = ifelse(
-    model == "slope_power",
-    "Random slopes", "Categorical time"
+  mutate(model = dplyr::case_match(
+    model,
+    "slope_power" ~ "Random slopes (unconstrained)",
+    "slope_c_power" ~ "Random slopes (constrained)",
+    "cat_power" ~ "Categorical time"
   ))
 
 ggplot(power_dat, aes(
@@ -763,11 +922,13 @@ ggplot(power_dat, aes(
   geom_line(linewidth = 0.6) +
   geom_point(size = 2) +
   scale_linetype_manual(values = c(
-    "Random slopes" = "solid",
+    "Random slopes (unconstrained)" = "solid",
+    "Random slopes (constrained)" = "dotted",
     "Categorical time" = "dashed"
   )) +
   scale_shape_manual(values = c(
-    "Random slopes" = 16,
+    "Random slopes (unconstrained)" = 16,
+    "Random slopes (constrained)" = 15,
     "Categorical time" = 17
   )) +
   labs(
@@ -776,7 +937,8 @@ ggplot(power_dat, aes(
     linetype = "Model",
     shape = "Model"
   ) +
-  theme_minimal(base_size = 10)
+  theme_minimal(base_size = 10) +
+  theme(legend.position = "bottom", legend.direction = "vertical")
 ```
 
 \FloatBarrier
@@ -784,15 +946,21 @@ ggplot(power_dat, aes(
 # Discussion
 
 In this study, we quantify the bias, coverage, and power of
-the random-slopes and categorical-time MMRM when the treatment
+three analysis models (unconstrained random-slopes, constrained
+random-slopes, and categorical-time MMRM) when the treatment
 effect in an AD trial departs from linearity, and find that the
-random-slopes model performs worse than the categorical-time
-MMRM even under exact linearity ($\kappa = 1$): it has lower
-power (0.542 vs. 0.623), a larger empirical SE (0.221 vs.
-0.191), and, away from linearity, materially larger bias and
-lower coverage than the categorical-time model, which remains
-approximately unbiased with coverage at or above 0.936 across
-every condition examined. This contradicts the general
+unconstrained random-slopes model performs worse than the
+categorical-time MMRM even under exact linearity ($\kappa = 1$):
+it has lower power
+(`r sprintf('%.3f', linear_row$slope_power)` vs.
+`r sprintf('%.3f', linear_row$cat_power)`), a larger empirical SE
+(`r sprintf('%.3f', linear_row$slope_emp_se)` vs.
+`r sprintf('%.3f', linear_row$cat_emp_se)`), and, away from
+linearity, materially larger bias and lower coverage than the
+categorical-time model, which remains approximately unbiased
+with coverage at or above
+`r sprintf('%.3f', cat_cov_range[1])` across every condition
+examined. This contradicts the general
 principle that a correctly specified, more parsimonious mean
 structure should be more efficient than a saturated one
 [@mallinckrodt2008recommendations], and it also contradicts a
@@ -815,43 +983,44 @@ contrast is constructed (Methods, "Analysis models"; Results,
 main effect that is not anchored to an observed baseline
 difference (post-baseline-only data, randomized baseline), and
 the reported contrast discards that main effect rather than
-using it or omitting it from the model. Our small-scale check
-of a constrained estimator that omits the main effect
-[@liang2000sankhya; @liu2015slopes] moved the bias at
-$\kappa = 0.3$ from approximately 0.17 to approximately $-0.01$
-in the same run, which is directionally consistent with this
-explanation, but the check used only 20 replicates per
-condition and did not establish whether the constrained
-estimator also closes the power gap at $\kappa = 1$. We
-therefore do not draw a firm conclusion about whether the
-random-slopes model can be made competitive with the
-categorical-time MMRM under linearity; this requires the
-full-scale rerun noted in the Reproducibility statement, and is
-the single most important open question raised by this study.
-If the constrained estimator does close the gap, the finding
-that an appropriately specified random-slopes model can match
-or exceed the categorical-time MMRM's power under linearity,
-while remaining more vulnerable to bias under nonlinearity,
-would be the more publishable and more interesting result; if
-it does not, the practical recommendation below would need no
-qualification.
+using it or omitting it from the model. Our full-scale check
+($n_{\mathrm{rep}} = 1000$ per $\kappa$, all seven $\kappa$
+values) of a constrained estimator that omits the main effect
+[@liang2000sankhya; @liu2015slopes]
+`r if (slope_c_gap_closed) "closed the power gap with the categorical-time MMRM at $\\kappa = 1$" else "narrowed, but did not close, the power gap with the categorical-time MMRM at $\\kappa = 1$"`
+(constrained-model power
+`r sprintf('%.3f', linear_row$slope_c_power)` versus
+`r sprintf('%.3f', linear_row$cat_power)` for the categorical-time
+MMRM and `r sprintf('%.3f', linear_row$slope_power)` for the
+unconstrained model), and at the most convex condition examined
+($\kappa = `r worst_slope_bias$kappa`$) the constrained
+estimator `r slope_c_bias_dir_txt` the unconstrained model's
+bias (`r sprintf('%.3f', worst_slope_bias$slope_c_bias)` versus
+`r sprintf('%.3f', worst_slope_bias$slope_bias)`, true
+$\delta = -0.45$). We also confirmed, in a separate null-scenario
+simulation ($\delta = 0$, $n_{\mathrm{rep}} = 1000$; Results,
+"Type I error under the null"), that all three estimators
+control type I error near the nominal 0.05 level, so the power
+differences reported here are not an artifact of differential
+false-positive rates.
+`r if (slope_c_gap_closed) "This is consistent with the hypothesis that the unidentified, unanchored treatment main effect -- not linearity per se -- drove the unconstrained model's power deficit under exact linearity." else "The gap did not fully close, so the unidentified main effect appears to be only a partial explanation of the unconstrained model's power deficit under exact linearity; some residual disadvantage for the random-slopes specification (constrained or not) relative to the categorical-time MMRM remains unexplained by this study."`
 
-Pending that rerun, the practical implication we would draw
-for AD trial design is a conditional one: the choice between
-slope and final-visit estimands should be informed by the
-expected treatment-effect trajectory, but only after confirming
-that the slope estimand is implemented with an estimator that
-does not itself introduce a power penalty under linearity, such
-as the constrained variant discussed above. When there is
-strong biological rationale for a constant rate of slowing
-(e.g., a treatment that directly modulates the underlying
-disease rate) and the estimator issue is resolved, the slope
-estimand and random-slopes model may offer a power advantage.
+The practical implication we draw for AD trial design is a
+conditional one: the choice between slope and final-visit
+estimands should be informed by the expected treatment-effect
+trajectory, but only after confirming that the slope estimand is
+implemented with an estimator that does not itself introduce a
+power penalty under linearity, such as the constrained variant
+evaluated here.
+`r if (slope_c_gap_closed) "When there is strong biological rationale for a constant rate of slowing (e.g., a treatment that directly modulates the underlying disease rate) and the constrained estimator is used, the slope estimand and random-slopes model may offer a power advantage on par with the categorical-time MMRM." else "Even with the constrained estimator, this simulation did not find the random-slopes model's power to match the categorical-time MMRM's under exact linearity, so we do not recommend the slope estimand as a power-superior alternative to the final-visit estimand in this design, regardless of estimator, absent further investigation of the residual gap."`
 When the mechanism suggests delayed onset (as with
 amyloid-clearing antibodies that require months to achieve
 plaque reduction) or early plateau, the final-visit estimand
 with categorical-time MMRM is the safer choice regardless of
-estimator.
+estimator, because it remains approximately unbiased with
+coverage at or above `r sprintf('%.3f', min(sim_summary$cat_coverage, na.rm = TRUE))`
+across every $\kappa$ examined, while both random-slopes variants
+show growing bias away from linearity (Results, "Bias"; Table 1).
 
 This conclusion aligns with the regulatory perspective. The
 FDA guidance notes that slope analyses may be considered
@@ -881,16 +1050,16 @@ trajectory without requiring linearity per se.
 This study has several limitations beyond the estimator issue
 discussed above.
 
-First, we do not include a null scenario ($\delta = 0$). Power
-comparisons between a misspecified and a correctly specified
-model are difficult to interpret fully without also
-demonstrating type I error control, and a transient early
-treatment effect that vanishes by month 18 is itself a form of
-nonlinearity ($\delta = 0$ at $t_{\max}$ with $g(t) \not\equiv
-0$ at interim visits) that the random-slopes model could handle
-particularly poorly. This is deferred to future work; see the
-Reproducibility statement for how to extend `run_simulation()`
-to a $\delta$ grid including 0.
+First, we now include a null scenario ($\delta = 0$; Results,
+"Type I error under the null") confirming that all three models
+control type I error near the nominal 0.05 level, so the power
+differences reported here are not an artifact of differential
+false-positive rates. We did not, however, simulate a transient
+early treatment effect that vanishes by month 18 ($\delta = 0$
+at $t_{\max}$ with $g(t) \not\equiv 0$ at interim visits), which
+is itself a form of nonlinearity that the random-slopes model
+could handle particularly poorly; this remains deferred to
+future work.
 
 Second, the design uses a single sample size (200 per arm), a
 single effect size, and a single covariance structure, with
@@ -929,8 +1098,10 @@ each model's coverage should use its own critical value, which
 would very slightly widen the random-slopes model's reported
 intervals.
 
-Future work might incorporate realistic dropout mechanisms,
-additional sample sizes, a null/transient-effect scenario, and
+Future work might incorporate realistic dropout mechanisms, a
+second sample size near 900 per arm with $n_{\mathrm{rep}} \geq
+2{,}100$ (matching CLARITY-AD; still deferred, see the
+Reproducibility statement), a transient-effect scenario, and
 sensitivity analyses under the ICH E9(R1) framework.
 
 # Future research
@@ -946,14 +1117,15 @@ sensitivity analyses under the ICH E9(R1) framework.
    covariance misspecification compounds the effects of mean
    structure misspecification.
 
-3. **Proportional and constrained models.** Evaluate the
+3. **Proportional models; design expansion.** Evaluate the
    proportional MMRM [@wang2022proportional] as an intermediate
    model that borrows strength across time without full
-   linearity. A constrained longitudinal data analysis (cLDA)
+   linearity. The constrained longitudinal data analysis (cLDA)
    variant of the random-slopes model (Methods; Results,
-   "Estimator definition check") has been implemented in
-   `fit_models()` and verified at small scale; a full-scale run
-   integrating it into Table 1 remains to be done (see the
+   "Estimator definition check") has now been evaluated at full
+   scale and integrated into Table 1; remaining design-expansion
+   work is a second sample size near 900 per arm with MAR
+   dropout and $n_{\mathrm{rep}} \geq 2{,}100$ (see the
    Reproducibility statement).
 
 4. **Nonlinear mixed-effects models.** Investigate whether
@@ -983,47 +1155,52 @@ sensitivity analyses under the ICH E9(R1) framework.
 
 This simulation follows the ADEMP reporting framework of
 Morris, White, and Crowther [-@morris2019using]. RNGkind is
-pinned to `"L'Ecuyer-CMRG"` and the seed is set once
-(`set.seed(20260310)`) before simulation begins
-(`analysis/scripts/run_sim_08.R`), not inside the per-replicate
-worker; `summarize_results()` reports the convergence rate and
-Monte Carlo SE for every performance measure (Table 2). An
-earlier internal audit of this pipeline against the same
-framework, which predates these fixes, is archived at
+pinned to `"L'Ecuyer-CMRG"`. `analysis/scripts/run_sim_08.R`
+(main design, seed `20260310`) and
+`analysis/scripts/run_sim_08_null.R` (null scenario, seed
+`20260320`, chosen distinct from the main design's seed so the
+two RNG streams never overlap) each set their seed once before
+simulation begins, not inside the per-replicate worker; both
+call the parallel driver `run_simulation_parallel()` in
+`analysis/scripts/sim_mmrm_linearity.R`, which assigns each
+parallel worker its own reproducible `L'Ecuyer-CMRG` substream
+via `parallel::nextRNGStream()` (documented in that function's
+source comments); `summarize_results()` reports the convergence
+rate and Monte Carlo SE for every performance measure (Table 2,
+Table 3). Because work is partitioned across cores rather than
+run on a single stream, results are reproducible at a fixed
+seed and `mc.cores` but are not bit-identical to a serial
+`run_simulation()` run at the same seed. An earlier internal
+audit of this pipeline against the same framework, which
+predates these fixes, is archived at
 `docs/morris-audit-2026-04-17.md` and is not part of this
 manuscript.
 
 The results in this report are loaded from
 `analysis/data/derived_data/sim_08.rds`
 ($n_{\mathrm{rep}} = 1000$ per $\kappa$, seven values of
-$\kappa$, unconstrained random-slopes and categorical-time
-MMRM only). To regenerate it:
+$\kappa$, all three estimators) and
+`analysis/data/derived_data/sim_08_null.rds`
+($n_{\mathrm{rep}} = 1000$, $\delta = 0$, all three estimators).
+To regenerate them:
 
 ```
 Rscript analysis/scripts/run_sim_08.R
+Rscript analysis/scripts/run_sim_08_null.R
 ```
 
-Two items remain open for a full-scale rerun before
-submission, each producible from the current, verified code by
-extending `run_simulation()`'s arguments:
+One item remains open, deferred beyond this revision's time
+budget:
 
-1. **Constrained-estimator table.** `fit_models()` now also
-   fits the constrained random-slopes model described in
-   Methods and returns it as `slope_c_*` columns; a full run
-   with $n_{\mathrm{rep}} \geq 1000$ across all seven $\kappa$
-   values is needed to add it to Table 1 (Results, "Estimator
-   definition check"; Discussion).
-2. **Null and design-expansion scenarios.** Adding
-   $\delta = 0$ scenarios and a second sample size near 900 per
-   arm (Limitations) requires calling `run_simulation()` with
-   `delta_vec` and `n_per_arm` grids; this is not yet
-   implemented as a vectorized argument and would require a
-   small code change to `run_simulation()` plus a rerun.
-
-Both reruns are expected to take on the order of tens of
-minutes to a few hours depending on hardware and were out of
-scope for this revision's time budget; they were not attempted
-here, and no numbers for either extension are reported in this
-manuscript.
+1. **Design expansion.** A second sample size near 900 per arm
+   (matching CLARITY-AD), MAR dropout, and $n_{\mathrm{rep}}
+   \geq 2{,}100$ (Limitations; Future research) would require
+   extending `simulate_one_trial()` with a dropout mechanism (not
+   currently implemented) and calling `run_simulation_parallel()`
+   with `n_per_arm = 900`; on this hardware (8 cores), extrapolating
+   from the main design's wall-clock time, this is estimated to
+   take on the order of an hour or more per design point and was
+   out of scope for this revision. No numbers for this extension
+   are reported in this manuscript.
 
 # References
