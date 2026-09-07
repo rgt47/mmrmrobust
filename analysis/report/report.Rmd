@@ -107,18 +107,18 @@ abstract_gap_closed <- abstract_linear_row$slope_c_power >=
 We use Monte Carlo simulation to quantify how nonlinearity in
 the treatment effect trajectory affects the bias, coverage,
 and power of a random-slopes mixed model relative to a
-categorical-time MMRM, in the setting of an 18-month
-Alzheimer's disease trial with CDR-SB as the endpoint and a
-fixed total treatment effect of $-0.45$ points at month 18
-(matching CLARITY-AD). Across seven values of a shape
-parameter $\kappa$ spanning early-onset to delayed-onset
-treatment effect trajectories, the random-slopes model is
-approximately unbiased only near $\kappa = 1$ (exact
-linearity) and its bias grows to
+categorical-time MMRM. The setting is an 18-month Alzheimer's
+disease trial with CDR-SB as the endpoint and a fixed total
+treatment effect of $-0.45$ points at month 18 (matching
+CLARITY-AD). We consider seven values of a shape parameter
+$\kappa$ spanning early-onset to delayed-onset treatment
+effect trajectories. The random-slopes model is approximately
+unbiased only near $\kappa = 1$ (exact linearity). Its bias
+grows to
 `r sprintf('%.3f', abs(abstract_worst_slope_bias$slope_bias))`
 points (versus a true effect of $-0.45$) at the most convex
-trajectory examined ($\kappa = `r abstract_worst_slope_bias$kappa`$);
-its 95\% CI coverage falls as low as
+trajectory examined ($\kappa = `r abstract_worst_slope_bias$kappa`$),
+and its 95\% CI coverage falls as low as
 `r sprintf('%.3f', abstract_slope_cov_range[1])` in the same
 condition. The categorical-time MMRM remains approximately
 unbiased and maintains coverage at or above
@@ -126,19 +126,20 @@ unbiased and maintains coverage at or above
 conditions examined. Contrary to the conventional expectation
 that a correctly specified parsimonious mean structure is more
 efficient, the unconstrained random-slopes model does not
-achieve higher power than the categorical-time MMRM even under
-exact linearity in this design; we show this is attributable in
-part to an estimator choice (an unidentified treatment main
-effect retained in a model fit to post-baseline data only)
-rather than to the linearity assumption per se. A full-scale
-($n_{\mathrm{rep}} = 1000$ per $\kappa$) evaluation of a
-constrained alternative that removes this main effect
+achieve higher power than the categorical-time MMRM, even
+under exact linearity in this design. We show this shortfall
+is attributable in part to an estimator choice, namely an
+unidentified treatment main effect retained in a model fit to
+post-baseline data only, rather than to the linearity
+assumption per se. A full-scale ($n_{\mathrm{rep}} = 1000$ per
+$\kappa$) evaluation of a constrained alternative that removes
+this main effect
 `r if (abstract_gap_closed) "closes the power gap with the categorical-time MMRM under exact linearity" else "narrows, but does not fully close, the power gap with the categorical-time MMRM under exact linearity"`
 (constrained power
 `r sprintf('%.3f', abstract_linear_row$slope_c_power)` versus
 `r sprintf('%.3f', abstract_linear_row$cat_power)` at
-$\kappa = 1$), while a separate null-scenario simulation
-confirms all three estimators control type I error near the
+$\kappa = 1$). A separate null-scenario simulation confirms
+that all three estimators control type I error near the
 nominal 0.05 level.
 
 **Keywords:** mixed model for repeated measures; random
