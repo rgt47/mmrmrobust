@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:search.r-project.org)",
+      "WebFetch(domain:cran.r-project.org)"
+    ]
+  }
+}
